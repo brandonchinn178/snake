@@ -1,0 +1,25 @@
+name: snake
+version: 0.1
+
+ghc-options:
+  - -Werror
+  - -Wall
+
+default-extensions:
+  - ImportQualifiedPost
+
+library:
+  source-dirs: src
+  dependencies:
+    - base
+    - threepenny-gui
+
+executable:
+  source-dirs: exe
+  main: Main.hs
+  dependencies:
+    - base
+    - bytestring
+    - snake
+    - open-browser
+    - threepenny-gui
