@@ -22,8 +22,7 @@ import Snake.Core.Grid (
  )
 
 data GameState = GameState
-  { millisPerFrame :: Int            -- ^ Number of milliseconds per frame
-  , snakeHead :: Coordinate          -- ^ Coordinate of the snake's head
+  { snakeHead :: Coordinate          -- ^ Coordinate of the snake's head
   , snakeTail :: [Direction]         -- ^ Directions for each subsequent piece of the snake's body
   , snakeMovement :: Maybe Direction -- ^ Current movement of the snake
   , target :: Coordinate             -- ^ Coordinate of the target
@@ -42,8 +41,7 @@ mkInitialState = do
   target <- generateCoordinateNotIn $ getSnakeBody snakeHead snakeTail
   return
     GameState
-      { millisPerFrame = 500
-      , snakeHead
+      { snakeHead
       , snakeTail
       , snakeMovement = Nothing
       , target
@@ -68,14 +66,8 @@ getNextState state@GameState{..} = do
       then generateCoordinateNotIn $ getSnakeBody snakeHead' snakeTail'
       else pure target
 
-  let millisPerFrame' =
-        if gotTarget
-          then max 10 $ millisPerFrame - 25
-          else millisPerFrame
-
   return state
-    { millisPerFrame = millisPerFrame'
-    , snakeHead = snakeHead'
+    { snakeHead = snakeHead'
     , snakeTail = snakeTail'
     , target = target'
     }

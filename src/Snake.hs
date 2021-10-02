@@ -36,7 +36,7 @@ gui window = do
 
   {-- Event handling --}
 
-  timer <- UI.timer & sink UI.interval (millisPerFrame <$> stateBehavior)
+  timer <- UI.timer & sink UI.interval (getMillisPerFrame <$> stateBehavior)
   on UI.tick timer $ \_ -> do
     UI.clearCanvas canvas
     state <- liftIO . getNextState =<< currentValue stateBehavior
@@ -66,6 +66,18 @@ gui window = do
       Just LetterS -> setMovementTo DOWN
 
   UI.start timer
+
+getMillisPerFrame :: GameState -> Int
+getMillisPerFrame GameState{snakeTail} =
+  let level = length snakeTail `div` targetsPerLevel
+   in max lowestMillisPerFrame $ initialMillisPerFrame + (level * changePerLevel)
+  where
+    initialMillisPerFrame = 150
+    lowestMillisPerFrame = 10
+    -- change in ms/frame per level
+    changePerLevel = -25
+    -- how many targets to consume before incrementing the level
+    targetsPerLevel = 3
 
 drawFrame :: GameState -> UI.Canvas -> UI ()
 drawFrame state@GameState{target} canvas = do
