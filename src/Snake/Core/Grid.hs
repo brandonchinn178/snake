@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase #-}
 
-module Snake.Grid (
+module Snake.Core.Grid (
   gridHeight,
   gridWidth,
   Coordinate,
@@ -9,10 +9,10 @@ module Snake.Grid (
 ) where
 
 gridHeight :: Int
-gridHeight = 20
+gridHeight = 40
 
 gridWidth :: Int
-gridWidth = 20
+gridWidth = 40
 
 -- | Coordinates on the plane, with (0, 0) being the top-left corner
 type Coordinate = (Int, Int)

@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module Snake.State (
+module Snake.Core.State (
   GameState (..),
   snakeBody,
   mkInitialState,
@@ -11,7 +11,7 @@ module Snake.State (
 import Data.Set qualified as Set
 import System.Random (randomRIO)
 
-import Snake.Grid (
+import Snake.Core.Grid (
   Coordinate,
   Direction (..),
   gridHeight,
@@ -24,21 +24,21 @@ data GameState = GameState
   , snakeHead :: Coordinate          -- ^ Coordinate of the snake's head
   , snakeTail :: [Direction]         -- ^ Directions for each subsequent piece of the snake's body
   , snakeMovement :: Maybe Direction -- ^ Current movement of the snake
-  , targetPos :: Coordinate          -- ^ Position of the target
+  , target :: Coordinate             -- ^ Coordinate of the target
   } deriving (Show)
 
 mkInitialState :: IO GameState
 mkInitialState = do
   let snakeHead = (0, 0)
       snakeTail = []
-  targetPos <- generateCoordinateNotIn $ snakeBody' snakeHead snakeTail
+  target <- generateCoordinateNotIn $ snakeBody' snakeHead snakeTail
   return
     GameState
       { millisPerFrame = 1000
       , snakeHead
       , snakeTail
       , snakeMovement = Nothing
-      , targetPos
+      , target
       }
 
 snakeBody :: GameState -> [Coordinate]
@@ -50,8 +50,8 @@ snakeBody' = scanl (flip nextPosition)
 -- | Randomly generate a new target.
 setNewTarget :: GameState -> IO GameState
 setNewTarget state = do
-  targetPos <- generateCoordinateNotIn $ snakeBody state
-  return state{targetPos}
+  target <- generateCoordinateNotIn $ snakeBody state
+  return state{target}
 
 -- | Generate a new coordinate that's not one of the given coordinates.
 generateCoordinateNotIn :: [Coordinate] -> IO Coordinate

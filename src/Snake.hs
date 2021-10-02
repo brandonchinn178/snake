@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Snake (gui) where
@@ -8,8 +9,9 @@ import Data.Function ((&))
 import Graphics.UI.Threepenny qualified as UI
 import Graphics.UI.Threepenny.Core
 
-import Snake.Grid
-import Snake.State
+import Snake.Core.Grid
+import Snake.Core.State
+import Snake.GUI.Canvas
 
 gui :: Window -> UI ()
 gui window = do
@@ -37,27 +39,8 @@ gui window = do
   timer <- UI.timer & sink UI.interval (millisPerFrame <$> stateBehavior)
   on UI.tick timer $ \_ -> do
     UI.clearCanvas canvas
-
     state <- currentValue stateBehavior
-    debug (show state)
-
-    forM_ [(x, y) | x <- [0..gridWidth - 1], y <- [0..gridHeight - 1]] $ \coord -> do
-      let box = coordinateToBox coord
-      applyAll_ canvas
-        [ set' UI.fillStyle $ UI.htmlColor "#ddd"
-        , set' UI.strokeStyle "#666"
-        , UI.beginPath
-        , UI.moveTo $ topLeft box
-        , UI.lineTo $ topRight box
-        , UI.lineTo $ bottomRight box
-        , UI.lineTo $ bottomLeft box
-        , UI.closePath
-        , UI.stroke
-        , UI.beginPath
-        , UI.arc (boxCenter box) 2 0 (2 * pi)
-        , UI.closePath
-        , UI.fill
-        ]
+    drawFrame state canvas
 
   on UI.keydown body $ \c -> do
     let setMovementTo movement = liftIO $ addStateUpdate $ \state -> state{snakeMovement = Just movement}
@@ -70,47 +53,32 @@ gui window = do
 
   UI.start timer
 
-{-- Canvas --}
+drawFrame :: GameState -> UI.Canvas -> UI ()
+drawFrame state@GameState{target} canvas = do
+  -- draw snake
+  set' UI.fillStyle snakeColor canvas
+  forM_ (snakeBody state) $ \snakePart -> do
+    let snakePartBox = coordinateToPixel snakePart
+    applyAll_ canvas
+      [ UI.beginPath
+      , UI.fillRect (pixelTopLeft snakePartBox) pixelWidth pixelHeight
+      , UI.closePath
+      , UI.fill
+      ]
 
-canvasHeight :: Int
-canvasHeight = 500
-
-canvasWidth :: Int
-canvasWidth = 500
-
-data CanvasBox = CanvasBox
-  { leftBound :: Double
-  , topBound :: Double
-  , rightBound :: Double
-  , bottomBound :: Double
-  } deriving (Show)
-
-topLeft :: CanvasBox -> UI.Point
-topLeft CanvasBox{..} = (leftBound, topBound)
-
-topRight :: CanvasBox -> UI.Point
-topRight CanvasBox{..} = (rightBound, topBound)
-
-bottomRight :: CanvasBox -> UI.Point
-bottomRight CanvasBox{..} = (rightBound, bottomBound)
-
-bottomLeft :: CanvasBox -> UI.Point
-bottomLeft CanvasBox{..} = (leftBound, bottomBound)
-
-boxCenter :: CanvasBox -> UI.Point
-boxCenter CanvasBox{..} = ((leftBound + rightBound) / 2, (topBound + bottomBound) / 2)
-
--- | Convert a Coordinate on the snake grid to a box on the canvas.
-coordinateToBox :: Coordinate -> CanvasBox
-coordinateToBox (x, y) =
-  let leftBound = boxWidth * fromIntegral x
-      topBound = boxHeight * fromIntegral y
-      rightBound = leftBound + boxWidth
-      bottomBound = topBound + boxHeight
-   in CanvasBox{..}
+  -- draw target
+  let targetBox = coordinateToPixel target
+  applyAll_ canvas
+    [ set' UI.fillStyle targetColor
+    , UI.beginPath
+    , fillCircle (pixelCenter targetBox) (pixelWidth / 2)
+    , UI.closePath
+    , UI.fill
+    ]
   where
-    boxWidth = fromIntegral canvasWidth / fromIntegral gridWidth
-    boxHeight = fromIntegral canvasHeight / fromIntegral gridHeight
+    snakeColor = UI.htmlColor "black"
+    targetColor = UI.htmlColor "red"
+    fillCircle center radius = UI.arc center radius 0 (2 * pi)
 
 {-- Keybindings --}
 
