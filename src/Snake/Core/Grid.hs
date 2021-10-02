@@ -5,6 +5,7 @@ module Snake.Core.Grid (
   gridWidth,
   Coordinate,
   Direction (..),
+  flipDirection,
   nextPosition,
 ) where
 
@@ -19,6 +20,13 @@ type Coordinate = (Int, Int)
 
 data Direction = LEFT | UP | RIGHT | DOWN
   deriving (Show)
+
+flipDirection :: Direction -> Direction
+flipDirection = \case
+  LEFT -> RIGHT
+  UP -> DOWN
+  RIGHT -> LEFT
+  DOWN -> UP
 
 nextPosition :: Direction -> Coordinate -> Coordinate
 nextPosition = \case

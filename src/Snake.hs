@@ -18,8 +18,8 @@ gui window = do
   {-- Game state --}
 
   initialState <- liftIO mkInitialState
-  (updateStateEvent, addStateUpdate) <- liftIO newEvent
-  stateBehavior <- accumB initialState updateStateEvent
+  (stateEvent, setState) <- liftIO newEvent
+  stateBehavior <- stepper initialState stateEvent
 
   {-- DOM setup --}
 
@@ -39,11 +39,14 @@ gui window = do
   timer <- UI.timer & sink UI.interval (millisPerFrame <$> stateBehavior)
   on UI.tick timer $ \_ -> do
     UI.clearCanvas canvas
-    state <- currentValue stateBehavior
+    state <- liftIO . getNextState =<< currentValue stateBehavior
+    liftIO $ setState state
     drawFrame state canvas
 
   on UI.keydown body $ \c -> do
-    let setMovementTo movement = liftIO $ addStateUpdate $ \state -> state{snakeMovement = Just movement}
+    let setMovementTo movement = do
+          state <- currentValue stateBehavior
+          liftIO $ setState state{snakeMovement = Just movement}
     case keyFromCode c of
       Nothing -> return ()
       -- arrow keys
