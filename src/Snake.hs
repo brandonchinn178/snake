@@ -45,11 +45,22 @@ gui window = do
   on UI.keydown body $ \c -> do
     let setMovementTo movement = liftIO $ addStateUpdate $ \state -> state{snakeMovement = Just movement}
     case keyFromCode c of
+      Nothing -> return ()
+      -- arrow keys
       Just LeftArrow -> setMovementTo LEFT
       Just UpArrow -> setMovementTo UP
       Just RightArrow -> setMovementTo RIGHT
       Just DownArrow -> setMovementTo DOWN
-      Nothing -> return ()
+      -- ijkl
+      Just LetterJ -> setMovementTo LEFT
+      Just LetterI -> setMovementTo UP
+      Just LetterL -> setMovementTo RIGHT
+      Just LetterK -> setMovementTo DOWN
+      -- wasd
+      Just LetterA -> setMovementTo LEFT
+      Just LetterW -> setMovementTo UP
+      Just LetterD -> setMovementTo RIGHT
+      Just LetterS -> setMovementTo DOWN
 
   UI.start timer
 
@@ -87,6 +98,14 @@ data Key
   | UpArrow
   | RightArrow
   | DownArrow
+  | LetterA
+  | LetterD
+  | LetterI
+  | LetterJ
+  | LetterK
+  | LetterL
+  | LetterS
+  | LetterW
   deriving (Show, Eq)
 
 keyFromCode :: Int -> Maybe Key
@@ -95,6 +114,14 @@ keyFromCode = \case
   38 -> Just UpArrow
   39 -> Just RightArrow
   40 -> Just DownArrow
+  65 -> Just LetterA
+  68 -> Just LetterD
+  73 -> Just LetterI
+  74 -> Just LetterJ
+  75 -> Just LetterK
+  76 -> Just LetterL
+  83 -> Just LetterS
+  87 -> Just LetterW
   _ -> Nothing
 
 {-- Utilities --}
