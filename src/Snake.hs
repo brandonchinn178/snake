@@ -1,5 +1,4 @@
 {-# LANGUAGE LambdaCase #-}
-{-# OPTIONS_GHC -Wno-unused-do-bind #-}
 
 module Snake (gui) where
 
@@ -8,8 +7,19 @@ import Data.Function ((&))
 import Graphics.UI.Threepenny qualified as UI
 import Graphics.UI.Threepenny.Core
 
+import Snake.Grid
+import Snake.State
+
 gui :: Window -> UI ()
 gui window = do
+  {-- Game state --}
+
+  initialState <- liftIO mkInitialState
+  (updateStateEvent, addStateUpdate) <- liftIO newEvent
+  stateBehavior <- accumB initialState updateStateEvent
+
+  {-- DOM setup --}
+
   set' title "Snake" window
   body <- getBody window
 
@@ -20,13 +30,21 @@ gui window = do
       & set style [("border", "solid black 1px")]
   body <+ [canvas]
 
-  let millisPerFrame = 1000
-  timer <- UI.timer & set UI.interval millisPerFrame
-  on UI.tick timer $ \_ -> debug "tick"
+  {-- Event handling --}
 
-  on UI.keydown body $ \c ->
+  timer <- UI.timer & sink UI.interval (millisPerFrame <$> stateBehavior)
+  on UI.tick timer $ \_ -> do
+    UI.clearCanvas canvas
+    state <- currentValue stateBehavior
+    UI.strokeText (show state) (0, 100) canvas
+
+  on UI.keydown body $ \c -> do
+    let setMovementTo movement = liftIO $ addStateUpdate $ \state -> state{snakeMovement = movement}
     case keyFromCode c of
-      Just key -> debug (show key)
+      Just LeftArrow -> setMovementTo MoveLeft
+      Just UpArrow -> setMovementTo MoveUp
+      Just RightArrow -> setMovementTo MoveRight
+      Just DownArrow -> setMovementTo MoveDown
       Nothing -> return ()
 
   UI.start timer
