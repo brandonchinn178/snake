@@ -3,6 +3,7 @@
 
 module Snake.State (
   GameState (..),
+  snakeBody,
   mkInitialState,
   setNewTarget,
 ) where
@@ -15,26 +16,36 @@ import Snake.Grid (
   Direction (..),
   gridHeight,
   gridWidth,
+  nextPosition,
  )
 
 data GameState = GameState
-  { millisPerFrame :: Int     -- ^ Number of milliseconds per frame
-  , snakeBody :: [Coordinate] -- ^ Coordinates of the snake's body
+  { millisPerFrame :: Int            -- ^ Number of milliseconds per frame
+  , snakeHead :: Coordinate          -- ^ Coordinate of the snake's head
+  , snakeTail :: [Direction]         -- ^ Directions for each subsequent piece of the snake's body
   , snakeMovement :: Maybe Direction -- ^ Current movement of the snake
-  , targetPos :: Coordinate   -- ^ Position of the target
+  , targetPos :: Coordinate          -- ^ Position of the target
   } deriving (Show)
 
 mkInitialState :: IO GameState
 mkInitialState = do
-  let snakeBody = [(0, 0)]
-  targetPos <- generateCoordinateNotIn snakeBody
+  let snakeHead = (0, 0)
+      snakeTail = []
+  targetPos <- generateCoordinateNotIn $ snakeBody' snakeHead snakeTail
   return
     GameState
       { millisPerFrame = 1000
-      , snakeBody
+      , snakeHead
+      , snakeTail
       , snakeMovement = Nothing
       , targetPos
       }
+
+snakeBody :: GameState -> [Coordinate]
+snakeBody GameState{snakeHead, snakeTail} = snakeBody' snakeHead snakeTail
+
+snakeBody' :: Coordinate -> [Direction] -> [Coordinate]
+snakeBody' = scanl (flip nextPosition)
 
 -- | Randomly generate a new target.
 setNewTarget :: GameState -> IO GameState
