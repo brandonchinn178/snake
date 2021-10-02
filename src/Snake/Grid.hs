@@ -4,7 +4,7 @@ module Snake.Grid (
   gridHeight,
   gridWidth,
   Coordinate,
-  Movement (..),
+  Direction (..),
   nextPosition,
 ) where
 
@@ -17,16 +17,15 @@ gridWidth = 20
 -- | Coordinates on the plane, with (0, 0) being the top-left corner
 type Coordinate = (Int, Int)
 
-data Movement = MoveLeft | MoveUp | MoveRight | MoveDown | NoMove
+data Direction = LEFT | UP | RIGHT | DOWN
   deriving (Show)
 
-nextPosition :: Movement -> Coordinate -> Coordinate
+nextPosition :: Direction -> Coordinate -> Coordinate
 nextPosition = \case
-  MoveLeft -> move (-1) 0
-  MoveUp -> move 0 (-1)
-  MoveRight -> move 1 0
-  MoveDown -> move 0 1
-  NoMove -> move 0 0
+  LEFT -> move (-1) 0
+  UP -> move 0 (-1)
+  RIGHT -> move 1 0
+  DOWN -> move 0 1
   where
     move dx dy (x, y) =
       ( clamp 0 (gridWidth - 1) (x + dx)

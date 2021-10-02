@@ -60,12 +60,12 @@ gui window = do
         ]
 
   on UI.keydown body $ \c -> do
-    let setMovementTo movement = liftIO $ addStateUpdate $ \state -> state{snakeMovement = movement}
+    let setMovementTo movement = liftIO $ addStateUpdate $ \state -> state{snakeMovement = Just movement}
     case keyFromCode c of
-      Just LeftArrow -> setMovementTo MoveLeft
-      Just UpArrow -> setMovementTo MoveUp
-      Just RightArrow -> setMovementTo MoveRight
-      Just DownArrow -> setMovementTo MoveDown
+      Just LeftArrow -> setMovementTo LEFT
+      Just UpArrow -> setMovementTo UP
+      Just RightArrow -> setMovementTo RIGHT
+      Just DownArrow -> setMovementTo DOWN
       Nothing -> return ()
 
   UI.start timer

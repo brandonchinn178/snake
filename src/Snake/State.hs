@@ -12,7 +12,7 @@ import System.Random (randomRIO)
 
 import Snake.Grid (
   Coordinate,
-  Movement (..),
+  Direction (..),
   gridHeight,
   gridWidth,
  )
@@ -20,7 +20,7 @@ import Snake.Grid (
 data GameState = GameState
   { millisPerFrame :: Int     -- ^ Number of milliseconds per frame
   , snakeBody :: [Coordinate] -- ^ Coordinates of the snake's body
-  , snakeMovement :: Movement -- ^ Current movement of the snake
+  , snakeMovement :: Maybe Direction -- ^ Current movement of the snake
   , targetPos :: Coordinate   -- ^ Position of the target
   } deriving (Show)
 
@@ -32,7 +32,7 @@ mkInitialState = do
     GameState
       { millisPerFrame = 1000
       , snakeBody
-      , snakeMovement = NoMove
+      , snakeMovement = Nothing
       , targetPos
       }
 
