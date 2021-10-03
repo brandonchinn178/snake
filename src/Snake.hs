@@ -65,11 +65,11 @@ gui window = do
     UI.timer
       & sink UI.interval (getMillisPerFrame <$> stateBehavior)
 
-  on UI.tick timer $ \_ -> do
-    UI.clearCanvas canvas
-    state <- liftIO . getNextState =<< currentValue stateBehavior
-    liftIO $ setState state
-    drawFrame state canvas
+  on UI.tick timer $ \_ -> updateStateM getNextState
+
+  element canvas
+    & sink (mkWriteAttr drawState) stateBehavior
+    & void
 
   on UI.keydown body $ \c -> do
     let setMovementTo movement = updateState $ \state ->
@@ -103,8 +103,10 @@ gui window = do
 
   UI.start timer
 
-drawFrame :: GameState -> UI.Canvas -> UI ()
-drawFrame state@GameState{gameStatus, target} canvas = do
+drawState :: GameState -> UI.Canvas -> UI ()
+drawState state@GameState{gameStatus, target} canvas = do
+  UI.clearCanvas canvas
+
   -- draw snake
   element canvas
     & set UI.fillStyle snakeColor
