@@ -14,15 +14,36 @@ import Snake.Core.State
 import Snake.Core.Targets
 import Snake.GUI.Canvas
 
+{-- Game manager --}
+
+data GameManager = GameManager
+  { gameState :: GameState
+  , nextTargets :: NextTargets
+  }
+
+initManager :: IO GameManager
+initManager = initManagerWith <$> mkNextTargets
+
+reinitManager :: GameManager -> GameManager
+reinitManager = initManagerWith . nextTargets
+
+initManagerWith :: NextTargets -> GameManager
+initManagerWith nextTargets =
+  let (gameState, nextTargets') = mkInitialState nextTargets
+   in GameManager
+        { gameState = gameState
+        , nextTargets = nextTargets'
+        }
+
+{-- GUI --}
+
 gui :: Window -> UI ()
 gui window = do
-  {-- Game state --}
+  {-- Game manager --}
 
-  initialStateAndNextTargets <- mkInitialState <$> liftIO mkNextTargets
-
-  (stateUpdateEvent, addStateUpdate) <- liftIO newEvent
-  stateAndNextTargetsBehavior <- accumB initialStateAndNextTargets stateUpdateEvent
-  let stateBehavior = fst <$> stateAndNextTargetsBehavior
+  initialManager <- liftIO initManager
+  (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
+  managerB <- accumB initialManager managerUpdateEvent
 
   {-- DOM setup --}
 
@@ -38,7 +59,7 @@ gui window = do
 
   scoreBox <-
     UI.p
-      & sink UI.text (("Score: " <>) . show . getScore <$> stateBehavior)
+      & sink UI.text (("Score: " <>) . show . getScore . gameState <$> managerB)
       & set style
           [ ("text-align", "center")
           , ("font-weight", "bold")
@@ -52,7 +73,7 @@ gui window = do
           [ ("border-style", "solid")
           , ("border-width", "3px")
           ]
-      & sink (mkWriteAttr drawState) stateBehavior
+      & sink (mkWriteAttr (drawState . gameState)) managerB
 
   appendTo body
     [ scoreBox
@@ -63,19 +84,30 @@ gui window = do
 
   timer <-
     UI.timer
-      & sink UI.interval (getMillisPerFrame <$> stateBehavior)
+      & sink UI.interval (getMillisPerFrame . gameState <$> managerB)
 
-  on UI.tick timer $ \_ -> liftIO $ addStateUpdate (uncurry getNextState)
+  on UI.tick timer $ \_ -> liftIO $ addManagerUpdate $
+    \manager@GameManager{..} ->
+      let (gameState', nextTargets') = getNextState gameState nextTargets
+       in manager
+            { gameState = gameState'
+            , nextTargets = nextTargets'
+            }
 
   on UI.keydown body $ \c -> do
-    let setMovementTo movement = liftIO . addStateUpdate $ \(state, nextTargets) ->
-          if isRunning (gameStatus state)
-            then (state{gameStatus = SnakeHissingTowards movement}, nextTargets)
-            else (state, nextTargets)
-        restartGame = liftIO . addStateUpdate $ \(state, nextTargets) ->
-          if isRunning (gameStatus state)
-            then (state, nextTargets)
-            else mkInitialState nextTargets
+    let setMovementTo movement = liftIO . addManagerUpdate $
+          \manager@GameManager{..} ->
+            manager
+              { gameState =
+                  if isRunning (gameStatus gameState)
+                    then gameState{gameStatus = SnakeHissingTowards movement}
+                    else gameState
+              }
+        restartGame = liftIO . addManagerUpdate $
+          \manager@GameManager{..} ->
+            if isRunning (gameStatus gameState)
+              then manager
+              else reinitManager manager
 
     case keyFromCode c of
       Nothing -> return ()
