@@ -52,6 +52,7 @@ gui window = do
           [ ("border-style", "solid")
           , ("border-width", "3px")
           ]
+      & sink (mkWriteAttr drawState) stateBehavior
 
   appendTo body
     [ scoreBox
@@ -65,10 +66,6 @@ gui window = do
       & sink UI.interval (getMillisPerFrame <$> stateBehavior)
 
   on UI.tick timer $ \_ -> liftIO $ addStateUpdate (uncurry getNextState)
-
-  element canvas
-    & sink (mkWriteAttr drawState) stateBehavior
-    & void
 
   on UI.keydown body $ \c -> do
     let setMovementTo movement = liftIO . addStateUpdate $ \(state, nextTargets) ->
