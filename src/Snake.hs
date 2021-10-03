@@ -1,6 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE RecursiveDo #-}
 
 module Snake (
   gui,
@@ -20,13 +21,7 @@ import Snake.GUI.Manager
 import Snake.GUI.Options
 
 gui :: GameOptions -> Window -> UI ()
-gui opts window = do
-  {-- Game manager --}
-
-  initialManager <- liftIO $ initManager opts
-  (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
-  managerB <- accumB initialManager managerUpdateEvent
-
+gui opts window = mdo
   {-- DOM setup --}
 
   set' title "Snake" window
@@ -61,6 +56,12 @@ gui opts window = do
     [ scoreBox
     , canvas
     ]
+
+  {-- Game manager --}
+
+  initialManager <- liftIO $ initManager opts
+  (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
+  managerB <- accumB initialManager managerUpdateEvent
 
   {-- Event handling --}
 
@@ -101,6 +102,8 @@ gui opts window = do
           Just SpaceBar -> restartGame
 
   UI.start timer
+
+  return ()
 
 drawGame :: GameManager -> UI.Canvas -> UI ()
 drawGame GameManager{..} canvas = do
