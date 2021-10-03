@@ -10,6 +10,7 @@ module Snake (
 
 import Control.Monad (forM_, void)
 import Data.Function ((&))
+import Data.Functor ((<&>), ($>))
 import Graphics.UI.Threepenny qualified as UI
 import Graphics.UI.Threepenny.Core
 
@@ -68,39 +69,39 @@ gui opts window = mdo
   {-- Game manager --}
 
   initialManager <- liftIO $ initManager opts
-  (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
-  managerB <- accumB initialManager managerUpdateEvent
-
-  on UI.tick timer $ \_ -> liftIO $ addManagerUpdate getNextManagerState
-
-  on UI.keydown body $ \c -> liftIO . addManagerUpdate $
-    let setMovementTo movement = \manager@GameManager{..} ->
-          case gameMode opts of
-            Interactive -> manager{gameState = setMovement gameState movement}
-            _ -> manager
-        restartGame = \manager@GameManager{..} ->
-          if isRunning (gameStatus gameState)
-            then manager
-            else reinitManager manager
-     in case keyFromCode c of
-          Nothing -> id
-          -- change direction: arrow keys
-          Just LeftArrow -> setMovementTo LEFT
-          Just UpArrow -> setMovementTo UP
-          Just RightArrow -> setMovementTo RIGHT
-          Just DownArrow -> setMovementTo DOWN
-          -- change direction: ijkl
-          Just LetterJ -> setMovementTo LEFT
-          Just LetterI -> setMovementTo UP
-          Just LetterL -> setMovementTo RIGHT
-          Just LetterK -> setMovementTo DOWN
-          -- change direction: wasd
-          Just LetterA -> setMovementTo LEFT
-          Just LetterW -> setMovementTo UP
-          Just LetterD -> setMovementTo RIGHT
-          Just LetterS -> setMovementTo DOWN
-          -- restart game
-          Just SpaceBar -> restartGame
+  let managerUpdateE =
+        fmap concatenate . unions $
+          [ UI.tick timer $> getNextManagerState
+          , UI.keydown body <&> \c ->
+              let setMovementTo movement = \manager@GameManager{..} ->
+                    case gameMode opts of
+                      Interactive -> manager{gameState = setMovement gameState movement}
+                      _ -> manager
+                  restartGame = \manager@GameManager{..} ->
+                    if isRunning (gameStatus gameState)
+                      then manager
+                      else reinitManager manager
+               in case keyFromCode c of
+                    Nothing -> id
+                    -- change direction: arrow keys
+                    Just LeftArrow -> setMovementTo LEFT
+                    Just UpArrow -> setMovementTo UP
+                    Just RightArrow -> setMovementTo RIGHT
+                    Just DownArrow -> setMovementTo DOWN
+                    -- change direction: ijkl
+                    Just LetterJ -> setMovementTo LEFT
+                    Just LetterI -> setMovementTo UP
+                    Just LetterL -> setMovementTo RIGHT
+                    Just LetterK -> setMovementTo DOWN
+                    -- change direction: wasd
+                    Just LetterA -> setMovementTo LEFT
+                    Just LetterW -> setMovementTo UP
+                    Just LetterD -> setMovementTo RIGHT
+                    Just LetterS -> setMovementTo DOWN
+                    -- restart game
+                    Just SpaceBar -> restartGame
+          ]
+  managerB <- accumB initialManager managerUpdateE
 
   return ()
 
