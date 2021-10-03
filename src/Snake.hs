@@ -57,18 +57,19 @@ gui opts window = mdo
     , canvas
     ]
 
-  {-- Game manager --}
-
-  initialManager <- liftIO $ initManager opts
-  (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
-  managerB <- accumB initialManager managerUpdateEvent
-
-  {-- Event handling --}
+  {-- Timer setup --}
 
   let toMillisPerFrame fps = round (1000 / fromIntegral fps :: Double)
   timer <-
     UI.timer
       & sink UI.interval (toMillisPerFrame . getFramesPerSecond <$> managerB)
+      & run UI.start
+
+  {-- Game manager --}
+
+  initialManager <- liftIO $ initManager opts
+  (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
+  managerB <- accumB initialManager managerUpdateEvent
 
   on UI.tick timer $ \_ -> liftIO $ addManagerUpdate getNextManagerState
 
@@ -100,8 +101,6 @@ gui opts window = mdo
           Just LetterS -> setMovementTo DOWN
           -- restart game
           Just SpaceBar -> restartGame
-
-  UI.start timer
 
   return ()
 
@@ -174,6 +173,12 @@ drawGame GameManager{..} canvas = do
     fillCircle center radius = UI.arc center radius 0 (2 * pi)
 
 {-- Utilities --}
+
+run :: Monad m => (a -> m ()) -> m a -> m a
+run f ma = do
+  a <- ma
+  f a
+  return a
 
 runAll :: Monad m => [a -> m ()] -> m a -> m a
 runAll fs ma = do
