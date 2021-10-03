@@ -20,6 +20,10 @@ gui window = do
   initialState <- liftIO mkInitialState
   (stateEvent, setState) <- liftIO newEvent
   stateBehavior <- stepper initialState stateEvent
+  let updateState f = updateStateM (pure . f)
+      updateStateM f = do
+        state <- currentValue stateBehavior
+        liftIO $ setState =<< f state
 
   {-- DOM setup --}
 
@@ -65,31 +69,34 @@ gui window = do
     drawFrame state canvas
 
   on UI.keydown body $ \c -> do
-    let setMovementTo movement = do
-          state <- currentValue stateBehavior
-          let gameStatus' = SnakeHissingTowards movement
-          liftIO . setState $
-            case gameStatus state of
-              SnakeHissingTowards{} -> state{gameStatus = gameStatus'}
-              SnakeWaiting{} -> state{gameStatus = gameStatus'}
-              _ -> state
+    let setMovementTo movement = updateState $ \state ->
+          if isRunning (gameStatus state)
+            then state{gameStatus = SnakeHissingTowards movement}
+            else state
+        restartGame = updateStateM $ \state ->
+          if isRunning (gameStatus state)
+            then pure state
+            else mkInitialState
+
     case keyFromCode c of
       Nothing -> return ()
-      -- arrow keys
+      -- change direction: arrow keys
       Just LeftArrow -> setMovementTo LEFT
       Just UpArrow -> setMovementTo UP
       Just RightArrow -> setMovementTo RIGHT
       Just DownArrow -> setMovementTo DOWN
-      -- ijkl
+      -- change direction: ijkl
       Just LetterJ -> setMovementTo LEFT
       Just LetterI -> setMovementTo UP
       Just LetterL -> setMovementTo RIGHT
       Just LetterK -> setMovementTo DOWN
-      -- wasd
+      -- change direction: wasd
       Just LetterA -> setMovementTo LEFT
       Just LetterW -> setMovementTo UP
       Just LetterD -> setMovementTo RIGHT
       Just LetterS -> setMovementTo DOWN
+      -- restart game
+      Just SpaceBar -> restartGame
 
   UI.start timer
 
@@ -129,7 +136,9 @@ drawFrame state@GameState{gameStatus, target} canvas = do
           _ -> Nothing
   case failureMessage of
     Nothing -> return ()
-    Just msg ->
+    Just msg -> do
+      let centerX = canvasWidth / 2
+          startY = canvasHeight * 2/5
       element canvas
         & set UI.fillStyle (UI.htmlColor "#ffffffaa")
         & runAll
@@ -142,7 +151,12 @@ drawFrame state@GameState{gameStatus, target} canvas = do
         & set UI.textFont "24px sans-serif"
         & set UI.textAlign UI.Center
         & runAll
-            [ UI.fillText msg (canvasWidth / 2, canvasHeight / 3)
+            [ UI.fillText msg (centerX, startY)
+            ]
+        & set UI.fillStyle (UI.htmlColor "black")
+        & set UI.textFont "18px sans-serif"
+        & runAll
+            [ UI.fillText "Hit the SPACE bar to restart." (centerX, startY + 50)
             ]
         & void
   where
@@ -182,10 +196,12 @@ data Key
   | LetterL
   | LetterS
   | LetterW
+  | SpaceBar
   deriving (Show, Eq)
 
 keyFromCode :: Int -> Maybe Key
 keyFromCode = \case
+  32 -> Just SpaceBar
   37 -> Just LeftArrow
   38 -> Just UpArrow
   39 -> Just RightArrow

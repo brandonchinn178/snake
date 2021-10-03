@@ -4,10 +4,11 @@
 
 module Snake.Core.State (
   GameState (..),
-  GameStatus (..),
   snakeBody,
   mkInitialState,
   getNextState,
+  GameStatus (..),
+  isRunning,
 ) where
 
 import Data.Set qualified as Set
@@ -56,6 +57,13 @@ data GameStatus
   | SnakeAteItself
   deriving (Show)
 
+isRunning :: GameStatus -> Bool
+isRunning = \case
+  SnakeWaiting -> True
+  SnakeHissingTowards{} -> True
+  SnakeRanIntoWall -> False
+  SnakeAteItself -> False
+
 -- | Get the next state.
 getNextState :: GameState -> IO GameState
 getNextState state@GameState{..} = do
@@ -84,15 +92,15 @@ getNextState state@GameState{..} = do
       else pure target
 
   return $
-    case gameStatus' of
-      SnakeHissingTowards{} ->
+    if isRunning gameStatus'
+      then
         state
           { gameStatus = gameStatus'
           , snakeHead = snakeHead'
           , snakeTail = snakeTail'
           , target = target'
           }
-      _ ->
+      else
         state
           { gameStatus = gameStatus'
           }
