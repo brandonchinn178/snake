@@ -94,40 +94,37 @@ gui window = do
             , nextTargets = nextTargets'
             }
 
-  on UI.keydown body $ \c -> do
-    let setMovementTo movement = liftIO . addManagerUpdate $
-          \manager@GameManager{..} ->
-            manager
-              { gameState =
-                  if isRunning (gameStatus gameState)
-                    then gameState{gameStatus = SnakeHissingTowards movement}
-                    else gameState
-              }
-        restartGame = liftIO . addManagerUpdate $
-          \manager@GameManager{..} ->
-            if isRunning (gameStatus gameState)
-              then manager
-              else reinitManager manager
-
-    case keyFromCode c of
-      Nothing -> return ()
-      -- change direction: arrow keys
-      Just LeftArrow -> setMovementTo LEFT
-      Just UpArrow -> setMovementTo UP
-      Just RightArrow -> setMovementTo RIGHT
-      Just DownArrow -> setMovementTo DOWN
-      -- change direction: ijkl
-      Just LetterJ -> setMovementTo LEFT
-      Just LetterI -> setMovementTo UP
-      Just LetterL -> setMovementTo RIGHT
-      Just LetterK -> setMovementTo DOWN
-      -- change direction: wasd
-      Just LetterA -> setMovementTo LEFT
-      Just LetterW -> setMovementTo UP
-      Just LetterD -> setMovementTo RIGHT
-      Just LetterS -> setMovementTo DOWN
-      -- restart game
-      Just SpaceBar -> restartGame
+  on UI.keydown body $ \c -> liftIO . addManagerUpdate $
+    let setMovementTo movement = \manager@GameManager{..} ->
+          manager
+            { gameState =
+                if isRunning (gameStatus gameState)
+                  then gameState{gameStatus = SnakeHissingTowards movement}
+                  else gameState
+            }
+        restartGame = \manager@GameManager{..} ->
+          if isRunning (gameStatus gameState)
+            then manager
+            else reinitManager manager
+     in case keyFromCode c of
+          Nothing -> id
+          -- change direction: arrow keys
+          Just LeftArrow -> setMovementTo LEFT
+          Just UpArrow -> setMovementTo UP
+          Just RightArrow -> setMovementTo RIGHT
+          Just DownArrow -> setMovementTo DOWN
+          -- change direction: ijkl
+          Just LetterJ -> setMovementTo LEFT
+          Just LetterI -> setMovementTo UP
+          Just LetterL -> setMovementTo RIGHT
+          Just LetterK -> setMovementTo DOWN
+          -- change direction: wasd
+          Just LetterA -> setMovementTo LEFT
+          Just LetterW -> setMovementTo UP
+          Just LetterD -> setMovementTo RIGHT
+          Just LetterS -> setMovementTo DOWN
+          -- restart game
+          Just SpaceBar -> restartGame
 
   UI.start timer
 
