@@ -7,6 +7,7 @@ module Snake.Core.Grid (
   Direction (..),
   flipDirection,
   nextPosition,
+  isOutOfBounds,
 ) where
 
 gridHeight :: Int
@@ -35,8 +36,13 @@ nextPosition = \case
   RIGHT -> move 1 0
   DOWN -> move 0 1
   where
-    move dx dy (x, y) =
-      ( clamp 0 (gridWidth - 1) (x + dx)
-      , clamp 0 (gridHeight - 1) (y + dy)
-      )
-    clamp lo hi = min hi . max lo
+    move dx dy (x, y) = (x + dx, y + dy)
+
+isOutOfBounds :: Coordinate -> Bool
+isOutOfBounds (x, y) =
+  or
+    [ x < 0
+    , x >= gridWidth
+    , y < 0
+    , y >= gridHeight
+    ]

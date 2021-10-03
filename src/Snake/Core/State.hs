@@ -4,6 +4,7 @@
 
 module Snake.Core.State (
   GameState (..),
+  GameStatus (..),
   snakeBody,
   mkInitialState,
   getNextState,
@@ -18,14 +19,15 @@ import Snake.Core.Grid (
   flipDirection,
   gridHeight,
   gridWidth,
+  isOutOfBounds,
   nextPosition,
  )
 
 data GameState = GameState
-  { snakeHead :: Coordinate          -- ^ Coordinate of the snake's head
-  , snakeTail :: [Direction]         -- ^ Directions for each subsequent piece of the snake's body
-  , snakeMovement :: Maybe Direction -- ^ Current movement of the snake
-  , target :: Coordinate             -- ^ Coordinate of the target
+  { gameStatus :: GameStatus
+  , snakeHead :: Coordinate  -- ^ Coordinate of the snake's head
+  , snakeTail :: [Direction] -- ^ Directions for each subsequent piece of the snake's body
+  , target :: Coordinate     -- ^ Coordinate of the target
   } deriving (Show)
 
 snakeBody :: GameState -> [Coordinate]
@@ -36,41 +38,64 @@ getSnakeBody = scanl (flip nextPosition)
 
 mkInitialState :: IO GameState
 mkInitialState = do
-  let snakeHead = (0, 0)
+  let snakeHead = (gridWidth `div` 2, gridHeight `div` 2)
       snakeTail = []
   target <- generateCoordinateNotIn $ getSnakeBody snakeHead snakeTail
   return
     GameState
-      { snakeHead
+      { gameStatus = SnakeWaiting
+      , snakeHead
       , snakeTail
-      , snakeMovement = Nothing
       , target
       }
+
+data GameStatus
+  = SnakeWaiting
+  | SnakeHissingTowards Direction
+  | SnakeRanIntoWall
+  | SnakeAteItself
+  deriving (Show)
 
 -- | Get the next state.
 getNextState :: GameState -> IO GameState
 getNextState state@GameState{..} = do
-  let snakeHead' = maybe id nextPosition snakeMovement $ snakeHead
+  let snakeHead' =
+        case gameStatus of
+          SnakeHissingTowards dir -> nextPosition dir snakeHead
+          _ -> snakeHead
       gotTarget = snakeHead' == target
-
       snakeTail' =
-        case flipDirection <$> snakeMovement of
-          Nothing -> snakeTail
-          Just nextTailPart
-            | gotTarget -> nextTailPart : snakeTail
+        case gameStatus of
+          SnakeHissingTowards dir
+            | gotTarget -> flipDirection dir : snakeTail
             | null snakeTail -> []
-            | otherwise -> nextTailPart : init snakeTail
+            | otherwise -> flipDirection dir : init snakeTail
+          _ -> snakeTail
+
+      snakeBody' = getSnakeBody snakeHead' snakeTail'
+      gameStatus'
+        | isOutOfBounds snakeHead' = SnakeRanIntoWall
+        | snakeHead' `elem` tail snakeBody' = SnakeAteItself
+        | otherwise = gameStatus
 
   target' <-
     if gotTarget
-      then generateCoordinateNotIn $ getSnakeBody snakeHead' snakeTail'
+      then generateCoordinateNotIn snakeBody'
       else pure target
 
-  return state
-    { snakeHead = snakeHead'
-    , snakeTail = snakeTail'
-    , target = target'
-    }
+  return $
+    case gameStatus' of
+      SnakeHissingTowards{} ->
+        state
+          { gameStatus = gameStatus'
+          , snakeHead = snakeHead'
+          , snakeTail = snakeTail'
+          , target = target'
+          }
+      _ ->
+        state
+          { gameStatus = gameStatus'
+          }
 
 -- | Generate a new coordinate that's not one of the given coordinates.
 generateCoordinateNotIn :: [Coordinate] -> IO Coordinate

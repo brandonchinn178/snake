@@ -67,7 +67,12 @@ gui window = do
   on UI.keydown body $ \c -> do
     let setMovementTo movement = do
           state <- currentValue stateBehavior
-          liftIO $ setState state{snakeMovement = Just movement}
+          let gameStatus' = SnakeHissingTowards movement
+          liftIO . setState $
+            case gameStatus state of
+              SnakeHissingTowards{} -> state{gameStatus = gameStatus'}
+              SnakeWaiting{} -> state{gameStatus = gameStatus'}
+              _ -> state
     case keyFromCode c of
       Nothing -> return ()
       -- arrow keys
