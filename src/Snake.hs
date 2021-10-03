@@ -11,19 +11,18 @@ import Graphics.UI.Threepenny.Core
 
 import Snake.Core.Grid
 import Snake.Core.State
+import Snake.Core.Targets
 import Snake.GUI.Canvas
 
 gui :: Window -> UI ()
 gui window = do
   {-- Game state --}
 
-  initialState <- liftIO mkInitialState
-  (stateEvent, setState) <- liftIO newEvent
-  stateBehavior <- stepper initialState stateEvent
-  let updateState f = updateStateM (pure . f)
-      updateStateM f = do
-        state <- currentValue stateBehavior
-        liftIO $ setState =<< f state
+  initialStateAndNextTargets <- mkInitialState <$> liftIO mkNextTargets
+
+  (stateUpdateEvent, addStateUpdate) <- liftIO newEvent
+  stateAndNextTargetsBehavior <- accumB initialStateAndNextTargets stateUpdateEvent
+  let stateBehavior = fst <$> stateAndNextTargetsBehavior
 
   {-- DOM setup --}
 
@@ -65,21 +64,21 @@ gui window = do
     UI.timer
       & sink UI.interval (getMillisPerFrame <$> stateBehavior)
 
-  on UI.tick timer $ \_ -> updateStateM getNextState
+  on UI.tick timer $ \_ -> liftIO $ addStateUpdate (uncurry getNextState)
 
   element canvas
     & sink (mkWriteAttr drawState) stateBehavior
     & void
 
   on UI.keydown body $ \c -> do
-    let setMovementTo movement = updateState $ \state ->
+    let setMovementTo movement = liftIO . addStateUpdate $ \(state, nextTargets) ->
           if isRunning (gameStatus state)
-            then state{gameStatus = SnakeHissingTowards movement}
-            else state
-        restartGame = updateStateM $ \state ->
+            then (state{gameStatus = SnakeHissingTowards movement}, nextTargets)
+            else (state, nextTargets)
+        restartGame = liftIO . addStateUpdate $ \(state, nextTargets) ->
           if isRunning (gameStatus state)
-            then pure state
-            else mkInitialState
+            then (state, nextTargets)
+            else mkInitialState nextTargets
 
     case keyFromCode c of
       Nothing -> return ()

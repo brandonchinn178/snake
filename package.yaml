@@ -12,7 +12,6 @@ library:
   source-dirs: src
   dependencies:
     - base
-    - containers
     - random
     - threepenny-gui
 
