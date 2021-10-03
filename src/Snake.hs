@@ -94,7 +94,7 @@ gui window = do
   UI.start timer
 
 drawFrame :: GameState -> UI.Canvas -> UI ()
-drawFrame state@GameState{target} canvas = do
+drawFrame state@GameState{gameStatus, target} canvas = do
   -- draw snake
   element canvas
     & set UI.fillStyle snakeColor
@@ -120,9 +120,34 @@ drawFrame state@GameState{target} canvas = do
         , UI.fill
         ]
     & void
+
+  -- draw failure message
+  let failureMessage =
+        case gameStatus of
+          SnakeRanIntoWall -> Just "You ran into the wall!"
+          SnakeAteItself -> Just "You ran into yourself!"
+          _ -> Nothing
+  case failureMessage of
+    Nothing -> return ()
+    Just msg ->
+      element canvas
+        & set UI.fillStyle (UI.htmlColor "#ffffffaa")
+        & runAll
+            [ UI.beginPath
+            , UI.fillRect (0, 0) canvasWidth canvasHeight
+            , UI.closePath
+            , UI.fill
+            ]
+        & set UI.fillStyle (UI.htmlColor "#a80000")
+        & set UI.textFont "24px sans-serif"
+        & set UI.textAlign UI.Center
+        & runAll
+            [ UI.fillText msg (canvasWidth / 2, canvasHeight / 3)
+            ]
+        & void
   where
-    snakeColor = UI.htmlColor "black"
-    targetColor = UI.htmlColor "red"
+    snakeColor = UI.htmlColor "#025d8c"
+    targetColor = UI.htmlColor "#ffdd00"
     fillCircle center radius = UI.arc center radius 0 (2 * pi)
 
 {-- Game state --}

@@ -23,17 +23,17 @@ import Graphics.UI.Threepenny qualified as UI
 
 import Snake.Core.Grid (Coordinate, gridHeight, gridWidth)
 
-canvasHeight :: Int
+canvasHeight :: Num a => a
 canvasHeight = 500
 
-canvasWidth :: Int
+canvasWidth :: Num a => a
 canvasWidth = 500
 
 pixelWidth :: Double
-pixelWidth = fromIntegral canvasWidth / fromIntegral gridWidth
+pixelWidth = canvasWidth / gridWidth
 
 pixelHeight :: Double
-pixelHeight = fromIntegral canvasHeight / fromIntegral gridHeight
+pixelHeight = canvasHeight / gridHeight
 
 data Pixel = Pixel
   { pixelLeft :: Double

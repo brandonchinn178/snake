@@ -10,10 +10,10 @@ module Snake.Core.Grid (
   isOutOfBounds,
 ) where
 
-gridHeight :: Int
+gridHeight :: Num a => a
 gridHeight = 40
 
-gridWidth :: Int
+gridWidth :: Num a => a
 gridWidth = 40
 
 -- | Coordinates on the plane, with (0, 0) being the top-left corner
