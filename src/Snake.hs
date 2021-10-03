@@ -34,7 +34,7 @@ gui window = do
           [ ("display", "grid")
           , ("align-items", "center")
           , ("justify-content", "center")
-          , ("font-size", "16px")
+          , ("font-size", "18px")
           ]
 
   scoreBox <-
@@ -42,14 +42,17 @@ gui window = do
       & sink UI.text (("Score: " <>) . show . getScore <$> stateBehavior)
       & set style
           [ ("text-align", "center")
-          , ("font-style", "bold")
+          , ("font-weight", "bold")
           ]
 
   canvas <-
     UI.canvas
       & set UI.height canvasHeight
       & set UI.width canvasWidth
-      & set style [("border", "solid black 1px")]
+      & set style
+          [ ("border-style", "solid")
+          , ("border-width", "3px")
+          ]
 
   appendTo body
     [ scoreBox
