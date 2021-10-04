@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad (join, void, when)
@@ -15,22 +16,25 @@ main = do
   shouldOpenBrowser <- isNothing <$> lookupEnv "NO_OPEN_BROWSER"
 
   let host = "localhost"
-  port <- (fromMaybe 8023 . join . fmap readMaybe) <$> lookupEnv "PORT"
+  port <- fromMaybe 8023 <$> readEnv "PORT"
+
+  initialMillisPerFrame <- fromMaybe 150 <$> readEnv "INITIAL_MS_PER_FRAME"
+  gridWidth <- fromMaybe 40 <$> readEnv "GRID_WIDTH"
+  gridHeight <- fromMaybe 40 <$> readEnv "GRID_HEIGHT"
 
   let config = defaultConfig
         { jsAddr = Just host
         , jsPort = Just port
         }
       opts = GameOptions
-        { initialMillisPerFrame = 150
-        , gameGrid =
-            Grid
-              { gridWidth = 40
-              , gridHeight = 40
-              }
+        { initialMillisPerFrame
+        , gameGrid = Grid{gridWidth, gridHeight}
         }
 
   when shouldOpenBrowser $
     void $ openBrowser $ "http://" ++ Char8.unpack host ++ ":" ++ show port
 
   startGUI config (gui opts)
+
+readEnv :: Read a => String -> IO (Maybe a)
+readEnv = fmap (join . fmap readMaybe) . lookupEnv
