@@ -5,7 +5,8 @@ module Snake.Core.Targets (
 ) where
 
 import Data.List (unfoldr)
-import System.Random (getStdGen, randomR)
+import System.Random (getStdGen)
+import System.Random.Stateful (runSTGen, uniformRM)
 
 import Snake.Core.Grid (
   Coordinate,
@@ -17,12 +18,12 @@ import Snake.Core.Grid (
 newtype NextTargets = NextTargets [Coordinate]
 
 mkNextTargets :: IO NextTargets
-mkNextTargets = NextTargets . unfoldr go <$> getStdGen
+mkNextTargets = NextTargets . unfoldr (Just . go) <$> getStdGen
   where
-    go s0 = Just $
-      let (x, s1) = randomR (0, gridWidth - 1) s0
-          (y, s2) = randomR (0, gridHeight - 1) s1
-       in ((x, y), s2)
+    go s = runSTGen s $ \g -> do
+      x <- uniformRM (0, gridWidth - 1) g
+      y <- uniformRM (0, gridHeight - 1) g
+      pure (x, y)
 
 findNextTargetWhere :: (Coordinate -> Bool) -> NextTargets -> (Coordinate, NextTargets)
 findNextTargetWhere f = go
