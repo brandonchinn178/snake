@@ -8,7 +8,7 @@ import System.Environment (lookupEnv)
 import Text.Read (readMaybe)
 import Web.Browser (openBrowser)
 
-import Snake (gui)
+import Snake (Grid (..), gui)
 
 main :: IO ()
 main = do
@@ -21,8 +21,13 @@ main = do
         { jsAddr = Just host
         , jsPort = Just port
         }
+      grid =
+        Grid
+          { gridWidth = 40
+          , gridHeight = 40
+          }
 
   when shouldOpenBrowser $
     void $ openBrowser $ "http://" ++ Char8.unpack host ++ ":" ++ show port
 
-  startGUI config gui
+  startGUI config (gui grid)

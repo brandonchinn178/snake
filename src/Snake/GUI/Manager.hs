@@ -10,6 +10,7 @@ module Snake.GUI.Manager (
   getScore,
 ) where
 
+import Snake.Core.Grid (Grid)
 import Snake.Core.State (GameState (..), mkInitialState)
 import Snake.Core.Targets (NextTargets, mkNextTargets)
 
@@ -18,15 +19,16 @@ data GameManager = GameManager
   , nextTargets :: NextTargets
   }
 
-initManager :: IO GameManager
-initManager = initManagerWith <$> mkNextTargets
+initManager :: Grid -> IO GameManager
+initManager grid = initManagerWith grid <$> mkNextTargets grid
 
 reinitManager :: GameManager -> GameManager
-reinitManager = initManagerWith . nextTargets
+reinitManager GameManager{gameState, nextTargets} =
+  initManagerWith (gameGrid gameState) nextTargets
 
-initManagerWith :: NextTargets -> GameManager
-initManagerWith nextTargets =
-  let (gameState, nextTargets') = mkInitialState nextTargets
+initManagerWith :: Grid -> NextTargets -> GameManager
+initManagerWith grid nextTargets =
+  let (gameState, nextTargets') = mkInitialState grid nextTargets
    in GameManager
         { gameState = gameState
         , nextTargets = nextTargets'

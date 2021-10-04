@@ -1,8 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Snake.Core.Grid (
-  gridHeight,
-  gridWidth,
+  Grid (..),
   Coordinate,
   Direction (..),
   flipDirection,
@@ -10,11 +10,10 @@ module Snake.Core.Grid (
   isOutOfBounds,
 ) where
 
-gridHeight :: Num a => a
-gridHeight = 40
-
-gridWidth :: Num a => a
-gridWidth = 40
+data Grid = Grid
+  { gridHeight :: Int
+  , gridWidth :: Int
+  }
 
 -- | Coordinates on the plane, with (0, 0) being the top-left corner
 type Coordinate = (Int, Int)
@@ -38,8 +37,8 @@ nextPosition = \case
   where
     move dx dy (x, y) = (x + dx, y + dy)
 
-isOutOfBounds :: Coordinate -> Bool
-isOutOfBounds (x, y) =
+isOutOfBounds :: Grid -> Coordinate -> Bool
+isOutOfBounds Grid{..} (x, y) =
   or
     [ x < 0
     , x >= gridWidth

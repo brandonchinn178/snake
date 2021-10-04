@@ -14,16 +14,16 @@ module Snake.Core.State (
 import Snake.Core.Grid (
   Coordinate,
   Direction (..),
+  Grid (..),
   flipDirection,
-  gridHeight,
-  gridWidth,
   isOutOfBounds,
   nextPosition,
  )
 import Snake.Core.Targets (NextTargets, findNextTargetWhere)
 
 data GameState = GameState
-  { gameStatus :: GameStatus
+  { gameGrid :: Grid
+  , gameStatus :: GameStatus
   , snakeHead :: Coordinate
   , snakeTail :: [Direction]
   , target :: Coordinate
@@ -35,10 +35,11 @@ snakeBody GameState{snakeHead, snakeTail} = getSnakeBody snakeHead snakeTail
 getSnakeBody :: Coordinate -> [Direction] -> [Coordinate]
 getSnakeBody = scanl (flip nextPosition)
 
-mkInitialState :: NextTargets -> (GameState, NextTargets)
-mkInitialState nextTargets =
+mkInitialState :: Grid -> NextTargets -> (GameState, NextTargets)
+mkInitialState grid@Grid{..} nextTargets =
   ( GameState
-      { gameStatus = SnakeWaiting
+      { gameGrid = grid
+      , gameStatus = SnakeWaiting
       , snakeHead
       , snakeTail = []
       , target
@@ -98,7 +99,7 @@ getNextState state@GameState{..} nextTargets = (state', nextTargets')
     snakeBody' = getSnakeBody snakeHead' snakeTail'
 
     gameStatus'
-      | isOutOfBounds snakeHead' = SnakeRanIntoWall
+      | isOutOfBounds gameGrid snakeHead' = SnakeRanIntoWall
       | snakeHead' `elem` tail snakeBody' = SnakeAteItself
       | otherwise = gameStatus
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Snake.Core.Targets (
   NextTargets,
@@ -10,17 +11,13 @@ import Data.List (unfoldr)
 import System.Random (getStdGen)
 import System.Random.Stateful (runSTGen, uniformRM)
 
-import Snake.Core.Grid (
-  Coordinate,
-  gridHeight,
-  gridWidth,
- )
+import Snake.Core.Grid (Coordinate, Grid (..))
 
 -- | An infinite list of all the next targets.
 newtype NextTargets = NextTargets [Coordinate]
 
-mkNextTargets :: IO NextTargets
-mkNextTargets = NextTargets . unfoldr (Just . go) <$> getStdGen
+mkNextTargets :: Grid -> IO NextTargets
+mkNextTargets Grid{..} = NextTargets . unfoldr (Just . go) <$> getStdGen
   where
     go s = runSTGen s $ \g -> do
       x <- uniformRM (0, gridWidth - 1) g

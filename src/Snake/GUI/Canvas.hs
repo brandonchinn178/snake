@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Snake.GUI.Canvas (
@@ -12,8 +13,8 @@ module Snake.GUI.Canvas (
   pixelBottomRight,
   pixelBottomLeft,
   pixelCenter,
-  pixelWidth,
-  pixelHeight,
+  getPixelWidth,
+  getPixelHeight,
 
   -- * Converesions
   coordinateToPixel,
@@ -21,7 +22,7 @@ module Snake.GUI.Canvas (
 
 import Graphics.UI.Threepenny qualified as UI
 
-import Snake.Core.Grid (Coordinate, gridHeight, gridWidth)
+import Snake.Core.Grid (Coordinate, Grid (..))
 
 canvasHeight :: Num a => a
 canvasHeight = 500
@@ -29,11 +30,11 @@ canvasHeight = 500
 canvasWidth :: Num a => a
 canvasWidth = 500
 
-pixelWidth :: Double
-pixelWidth = canvasWidth / gridWidth
+getPixelWidth :: Grid -> Double
+getPixelWidth Grid{gridWidth} = canvasWidth / fromIntegral gridWidth
 
-pixelHeight :: Double
-pixelHeight = canvasHeight / gridHeight
+getPixelHeight :: Grid -> Double
+getPixelHeight Grid{gridHeight} = canvasHeight / fromIntegral gridHeight
 
 data Pixel = Pixel
   { pixelLeft :: Double
@@ -58,10 +59,13 @@ pixelCenter :: Pixel -> UI.Point
 pixelCenter Pixel{..} = ((pixelLeft + pixelRight) / 2, (pixelTop + pixelBottom) / 2)
 
 -- | Convert a Coordinate on the snake grid to a pixel on the canvas.
-coordinateToPixel :: Coordinate -> Pixel
-coordinateToPixel (x, y) =
+coordinateToPixel :: Grid -> Coordinate -> Pixel
+coordinateToPixel grid (x, y) =
   let pixelLeft = pixelWidth * fromIntegral x
       pixelTop = pixelHeight * fromIntegral y
       pixelRight = pixelLeft + pixelWidth
       pixelBottom = pixelTop + pixelHeight
    in Pixel{..}
+  where
+    pixelWidth = getPixelWidth grid
+    pixelHeight = getPixelHeight grid

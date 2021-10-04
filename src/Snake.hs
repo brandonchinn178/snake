@@ -2,7 +2,10 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Snake (gui) where
+module Snake (
+  gui,
+  Grid (..),
+) where
 
 import Control.Monad (forM_, void)
 import Data.Function ((&))
@@ -15,11 +18,11 @@ import Snake.GUI.Canvas
 import Snake.GUI.Keys
 import Snake.GUI.Manager
 
-gui :: Window -> UI ()
-gui window = do
+gui :: Grid -> Window -> UI ()
+gui gameGrid window = do
   {-- Game manager --}
 
-  initialManager <- liftIO initManager
+  initialManager <- liftIO $ initManager gameGrid
   (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
   managerB <- accumB initialManager managerUpdateEvent
 
@@ -107,7 +110,7 @@ gui window = do
   UI.start timer
 
 drawState :: GameState -> UI.Canvas -> UI ()
-drawState state@GameState{gameStatus, target} canvas = do
+drawState state@GameState{gameGrid, gameStatus, target} canvas = do
   UI.clearCanvas canvas
 
   -- draw snake
@@ -115,7 +118,7 @@ drawState state@GameState{gameStatus, target} canvas = do
     & set UI.fillStyle snakeColor
     & void
   forM_ (snakeBody state) $ \snakePart -> do
-    let snakePartBox = coordinateToPixel snakePart
+    let snakePartBox = coordinateToPixel gameGrid snakePart
     element canvas
       & runAll
           [ UI.beginPath
@@ -125,7 +128,7 @@ drawState state@GameState{gameStatus, target} canvas = do
           ]
 
   -- draw target
-  let targetBox = coordinateToPixel target
+  let targetBox = coordinateToPixel gameGrid target
   element canvas
     & set UI.fillStyle targetColor
     & runAll
@@ -171,6 +174,8 @@ drawState state@GameState{gameStatus, target} canvas = do
     snakeColor = UI.htmlColor "#025d8c"
     targetColor = UI.htmlColor "#ffdd00"
     fillCircle center radius = UI.arc center radius 0 (2 * pi)
+    pixelWidth = getPixelWidth gameGrid
+    pixelHeight = getPixelHeight gameGrid
 
 {-- Utilities --}
 
