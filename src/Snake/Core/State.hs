@@ -7,6 +7,7 @@ module Snake.Core.State (
   snakeBody,
   mkInitialState,
   getNextState,
+  setMovement,
   GameStatus (..),
   isRunning,
 ) where
@@ -107,3 +108,11 @@ getNextState state@GameState{..} nextTargets = (state', nextTargets')
       if gotTarget
         then findNextTargetWhere (`notElem` snakeBody') nextTargets
         else (target, nextTargets)
+
+
+-- | Set the movement in the GameState if the game is running.
+setMovement :: GameState -> Direction -> GameState
+setMovement gameState dir =
+  if isRunning (gameStatus gameState)
+    then gameState{gameStatus = SnakeHissingTowards dir}
+    else gameState

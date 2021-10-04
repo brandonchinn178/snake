@@ -72,12 +72,9 @@ gui opts window = do
 
   on UI.keydown body $ \c -> liftIO . addManagerUpdate $
     let setMovementTo movement = \manager@GameManager{..} ->
-          manager
-            { gameState =
-                if isRunning (gameStatus gameState)
-                  then gameState{gameStatus = SnakeHissingTowards movement}
-                  else gameState
-            }
+          case gameMode opts of
+            Interactive -> manager{gameState = setMovement gameState movement}
+            _ -> manager
         restartGame = \manager@GameManager{..} ->
           if isRunning (gameStatus gameState)
             then manager

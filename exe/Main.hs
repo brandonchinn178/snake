@@ -1,7 +1,8 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad (join, void, when)
+import Control.Monad (guard, join, msum, void, when)
 import Data.ByteString.Char8 qualified as Char8
 import Data.Maybe (fromMaybe, isNothing)
 import Graphics.UI.Threepenny.Core (Config (..), defaultConfig, startGUI)
@@ -9,7 +10,13 @@ import System.Environment (lookupEnv)
 import Text.Read (readMaybe)
 import Web.Browser (openBrowser)
 
-import Snake (GameOptions (..), Grid (..), gui)
+import Snake (
+  GameMode (..),
+  GameOptions (..),
+  Grid (..),
+  gui,
+ )
+import Snake.Strategy (allStrategies)
 
 main :: IO ()
 main = do
@@ -18,6 +25,7 @@ main = do
   let host = "localhost"
   port <- fromMaybe 8023 <$> readEnv "PORT"
 
+  gameMode <- parseMode . fromMaybe "interactive" =<< lookupEnv "MODE"
   initialMillisPerFrame <- fromMaybe 150 <$> readEnv "INITIAL_MS_PER_FRAME"
   gridWidth <- fromMaybe 40 <$> readEnv "GRID_WIDTH"
   gridHeight <- fromMaybe 40 <$> readEnv "GRID_HEIGHT"
@@ -29,7 +37,8 @@ main = do
         , jsPort = Just port
         }
       opts = GameOptions
-        { initialMillisPerFrame
+        { gameMode
+        , initialMillisPerFrame
         , gameGrid = Grid{gridWidth, gridHeight}
         , maxBoardHeight
         , maxBoardWidth
@@ -42,3 +51,11 @@ main = do
 
 readEnv :: Read a => String -> IO (Maybe a)
 readEnv = fmap (join . fmap readMaybe) . lookupEnv
+
+parseMode :: String -> IO GameMode
+parseMode mode =
+  maybe (error $ "Unknown mode: " ++ mode) return $
+    msum
+      [ guard (mode == "interactive") *> Just Interactive
+      , RunBot <$> lookup mode allStrategies
+      ]

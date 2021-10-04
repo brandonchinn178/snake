@@ -12,11 +12,16 @@ module Snake.GUI.Manager (
   getNextManagerState,
 ) where
 
-import Snake.Core.State (GameState, getNextState, mkInitialState)
+import Snake.Core.State (
+  GameState,
+  getNextState,
+  mkInitialState,
+  setMovement,
+ )
 import Snake.Core.State qualified as GameState (GameState (..))
 import Snake.Core.Targets (NextTargets, mkNextTargets)
 import Snake.GUI.Canvas (Board, mkBoard)
-import Snake.GUI.Options (GameOptions (..))
+import Snake.GUI.Options (GameMode (..), GameOptions (..))
 
 data GameManager = GameManager
   { gameOptions :: GameOptions
@@ -62,8 +67,14 @@ getScore = length . GameState.snakeTail . gameState
 getNextManagerState :: GameManager -> GameManager
 getNextManagerState manager@GameManager{..} =
   manager
-    { gameState = gameState'
+    { gameState = gameState''
     , nextTargets = nextTargets'
     }
   where
-    (gameState', nextTargets') = getNextState gameState nextTargets
+    (gameState'', nextTargets') = getNextState gameState' nextTargets
+    gameState' =
+      case gameMode gameOptions of
+        Interactive -> gameState
+        RunBot getNextDirection
+          | Just dir <- getNextDirection gameState -> setMovement gameState dir
+        _ -> gameState
