@@ -8,4 +8,6 @@ import Snake.Core.Grid (Grid (..))
 data GameOptions = GameOptions
   { initialMillisPerFrame :: Int
   , gameGrid :: Grid
+  , maxBoardHeight :: Int
+  , maxBoardWidth :: Int
   }

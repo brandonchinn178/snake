@@ -49,13 +49,13 @@ gui opts window = do
 
   canvas <-
     UI.canvas
-      & set UI.height canvasHeight
-      & set UI.width canvasWidth
+      & sink UI.height (boardHeight . gameBoard <$> managerB)
+      & sink UI.width (boardWidth . gameBoard <$> managerB)
       & set style
           [ ("border-style", "solid")
           , ("border-width", "3px")
           ]
-      & sink (mkWriteAttr (drawState . gameState)) managerB
+      & sink (mkWriteAttr drawGame) managerB
 
   appendTo body
     [ scoreBox
@@ -110,31 +110,31 @@ gui opts window = do
 
   UI.start timer
 
-drawState :: GameState -> UI.Canvas -> UI ()
-drawState state@GameState{gameGrid, gameStatus, target} canvas = do
+drawGame :: GameManager -> UI.Canvas -> UI ()
+drawGame GameManager{..} canvas = do
   UI.clearCanvas canvas
 
   -- draw snake
   element canvas
     & set UI.fillStyle snakeColor
     & void
-  forM_ (snakeBody state) $ \snakePart -> do
-    let snakePartBox = coordinateToPixel gameGrid snakePart
+  forM_ (snakeBody gameState) $ \snakePart -> do
+    let snakePartBox = coordinateToPixel gameBoard snakePart
     element canvas
       & runAll
           [ UI.beginPath
-          , UI.fillRect (pixelTopLeft snakePartBox) pixelWidth pixelHeight
+          , UI.fillRect (pixelTopLeft snakePartBox) pixelSize pixelSize
           , UI.closePath
           , UI.fill
           ]
 
   -- draw target
-  let targetBox = coordinateToPixel gameGrid target
+  let targetBox = coordinateToPixel gameBoard target
   element canvas
     & set UI.fillStyle targetColor
     & runAll
         [ UI.beginPath
-        , fillCircle (pixelCenter targetBox) (pixelWidth / 2)
+        , fillCircle (pixelCenter targetBox) (pixelSize / 2)
         , UI.closePath
         , UI.fill
         ]
@@ -149,13 +149,13 @@ drawState state@GameState{gameGrid, gameStatus, target} canvas = do
   case failureMessage of
     Nothing -> return ()
     Just msg -> do
-      let centerX = canvasWidth / 2
-          startY = canvasHeight * 2/5
+      let centerX = fromIntegral boardWidth / 2
+          startY = fromIntegral boardHeight * 2/5
       element canvas
         & set UI.fillStyle (UI.htmlColor "#ffffffaa")
         & runAll
             [ UI.beginPath
-            , UI.fillRect (0, 0) canvasWidth canvasHeight
+            , UI.fillRect (0, 0) (fromIntegral boardWidth) (fromIntegral boardHeight)
             , UI.closePath
             , UI.fill
             ]
@@ -172,11 +172,11 @@ drawState state@GameState{gameGrid, gameStatus, target} canvas = do
             ]
         & void
   where
+    Board{boardHeight, boardWidth, pixelSize} = gameBoard
+    GameState{gameStatus, target} = gameState
     snakeColor = UI.htmlColor "#025d8c"
     targetColor = UI.htmlColor "#ffdd00"
     fillCircle center radius = UI.arc center radius 0 (2 * pi)
-    pixelWidth = getPixelWidth gameGrid
-    pixelHeight = getPixelHeight gameGrid
 
 {-- Utilities --}
 

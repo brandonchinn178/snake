@@ -1,10 +1,13 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Snake.GUI.Canvas (
-  -- * Canvas dimensions
-  canvasHeight,
-  canvasWidth,
+  -- * Board
+  Board (..),
+  BoardHeight,
+  BoardWidth,
+  mkBoard,
 
   -- * A pixel on the canvas
   Pixel (..),
@@ -13,8 +16,6 @@ module Snake.GUI.Canvas (
   pixelBottomRight,
   pixelBottomLeft,
   pixelCenter,
-  getPixelWidth,
-  getPixelHeight,
 
   -- * Converesions
   coordinateToPixel,
@@ -24,17 +25,29 @@ import Graphics.UI.Threepenny qualified as UI
 
 import Snake.Core.Grid (Coordinate, Grid (..))
 
-canvasHeight :: Num a => a
-canvasHeight = 500
+data Board = Board
+  { boardHeight :: BoardHeight
+  , boardWidth :: BoardWidth
+  , pixelSize :: Double
+  }
 
-canvasWidth :: Num a => a
-canvasWidth = 500
+type BoardHeight = Int
+type BoardWidth = Int
 
-getPixelWidth :: Grid -> Double
-getPixelWidth Grid{gridWidth} = canvasWidth / fromIntegral gridWidth
-
-getPixelHeight :: Grid -> Double
-getPixelHeight Grid{gridHeight} = canvasHeight / fromIntegral gridHeight
+-- | Create a board to match the same aspect ratio as the grid.
+mkBoard :: Grid -> BoardHeight -> BoardWidth -> Board
+mkBoard Grid{..} maxBoardHeight maxBoardWidth =
+  Board
+    { boardHeight = pixelSize * gridHeight
+    , boardWidth = pixelSize * gridWidth
+    , pixelSize = fromIntegral pixelSize
+    }
+  where
+    pixelSize =
+      floor $
+        min @Double
+          (fromIntegral maxBoardWidth / fromIntegral gridWidth)
+          (fromIntegral maxBoardHeight / fromIntegral gridHeight)
 
 data Pixel = Pixel
   { pixelLeft :: Double
@@ -59,13 +72,10 @@ pixelCenter :: Pixel -> UI.Point
 pixelCenter Pixel{..} = ((pixelLeft + pixelRight) / 2, (pixelTop + pixelBottom) / 2)
 
 -- | Convert a Coordinate on the snake grid to a pixel on the canvas.
-coordinateToPixel :: Grid -> Coordinate -> Pixel
-coordinateToPixel grid (x, y) =
-  let pixelLeft = pixelWidth * fromIntegral x
-      pixelTop = pixelHeight * fromIntegral y
-      pixelRight = pixelLeft + pixelWidth
-      pixelBottom = pixelTop + pixelHeight
+coordinateToPixel :: Board -> Coordinate -> Pixel
+coordinateToPixel Board{pixelSize} (x, y) =
+  let pixelLeft = pixelSize * fromIntegral x
+      pixelTop = pixelSize * fromIntegral y
+      pixelRight = pixelLeft + pixelSize
+      pixelBottom = pixelTop + pixelSize
    in Pixel{..}
-  where
-    pixelWidth = getPixelWidth grid
-    pixelHeight = getPixelHeight grid

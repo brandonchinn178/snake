@@ -1,4 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Snake.GUI.Manager (
   GameManager (..),
@@ -13,10 +14,12 @@ module Snake.GUI.Manager (
 import Snake.Core.State (GameState, mkInitialState)
 import Snake.Core.State qualified as GameState (GameState (..))
 import Snake.Core.Targets (NextTargets, mkNextTargets)
+import Snake.GUI.Canvas (Board, mkBoard)
 import Snake.GUI.Options (GameOptions (..))
 
 data GameManager = GameManager
   { gameOptions :: GameOptions
+  , gameBoard :: Board
   , gameState :: GameState
   , nextTargets :: NextTargets
   }
@@ -29,10 +32,11 @@ reinitManager GameManager{gameOptions, nextTargets} =
   initManagerWith gameOptions nextTargets
 
 initManagerWith :: GameOptions -> NextTargets -> GameManager
-initManagerWith opts@GameOptions{gameGrid} nextTargets =
+initManagerWith opts@GameOptions{..} nextTargets =
   let (gameState, nextTargets') = mkInitialState gameGrid nextTargets
    in GameManager
         { gameOptions = opts
+        , gameBoard = mkBoard gameGrid maxBoardHeight maxBoardWidth
         , gameState = gameState
         , nextTargets = nextTargets'
         }

@@ -21,6 +21,8 @@ main = do
   initialMillisPerFrame <- fromMaybe 150 <$> readEnv "INITIAL_MS_PER_FRAME"
   gridWidth <- fromMaybe 40 <$> readEnv "GRID_WIDTH"
   gridHeight <- fromMaybe 40 <$> readEnv "GRID_HEIGHT"
+  maxBoardHeight <- fromMaybe 500 <$> readEnv "MAX_BOARD_HEIGHT"
+  maxBoardWidth <- fromMaybe 500 <$> readEnv "MAX_BOARD_WIDTH"
 
   let config = defaultConfig
         { jsAddr = Just host
@@ -29,6 +31,8 @@ main = do
       opts = GameOptions
         { initialMillisPerFrame
         , gameGrid = Grid{gridWidth, gridHeight}
+        , maxBoardHeight
+        , maxBoardWidth
         }
 
   when shouldOpenBrowser $
