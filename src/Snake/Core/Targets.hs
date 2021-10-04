@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Snake.Core.Targets (
   NextTargets,
   mkNextTargets,
@@ -25,12 +27,16 @@ mkNextTargets = NextTargets . unfoldr (Just . go) <$> getStdGen
       y <- uniformRM (0, gridHeight - 1) g
       pure (x, y)
 
+getNextTarget :: NextTargets -> (Coordinate, NextTargets)
+getNextTarget = \case
+  NextTargets (coord:rest) -> (coord, NextTargets rest)
+  NextTargets [] -> error "Invariant violation: NextTargets was empty"
+
 findNextTargetWhere :: (Coordinate -> Bool) -> NextTargets -> (Coordinate, NextTargets)
 findNextTargetWhere f = go
   where
-    go (NextTargets coords) =
-      let c = head coords
-          rest = NextTargets $ tail coords
+    go nextTargets =
+      let (c, rest) = getNextTarget nextTargets
        in if f c
             then (c, rest)
             else go rest
