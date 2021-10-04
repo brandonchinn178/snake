@@ -7,7 +7,7 @@ module Snake.GUI.Manager (
   reinitManager,
 
   -- * Game information
-  getMillisPerFrame,
+  getFramesPerSecond,
   getScore,
   getNextManagerState,
 ) where
@@ -49,15 +49,14 @@ initManagerWith opts@GameOptions{..} nextTargets =
 
 {-- Game state --}
 
-getMillisPerFrame :: GameManager -> Int
-getMillisPerFrame GameManager{gameOptions, gameState} =
+getFramesPerSecond :: GameManager -> Int
+getFramesPerSecond GameManager{gameOptions, gameState} =
   let level = length (GameState.snakeTail gameState) `div` targetsPerLevel
-   in max lowestMillisPerFrame $ initialMillisPerFrame + (level * changePerLevel)
+   in round $ fromIntegral initialFPS * fpsMultiplier ** fromIntegral level
   where
-    GameOptions{initialMillisPerFrame} = gameOptions
-    lowestMillisPerFrame = 10
-    -- change in ms/frame per level
-    changePerLevel = -25
+    GameOptions{initialFPS} = gameOptions
+    -- fps multiplier per level
+    fpsMultiplier = 1.3 :: Double
     -- how many targets to consume before incrementing the level
     targetsPerLevel = 3
 

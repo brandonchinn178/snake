@@ -12,7 +12,7 @@ import Snake.Strategy (BotStrategy)
 
 data GameOptions = GameOptions
   { gameMode :: GameMode
-  , initialMillisPerFrame :: Int
+  , initialFPS :: Int -- ^ The starting frame per second rate
   , gameGrid :: Grid
   , maxBoardHeight :: Int
   , maxBoardWidth :: Int

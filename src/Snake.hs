@@ -64,9 +64,10 @@ gui opts window = do
 
   {-- Event handling --}
 
+  let toMillisPerFrame fps = round (1000 / fromIntegral fps :: Double)
   timer <-
     UI.timer
-      & sink UI.interval (getMillisPerFrame <$> managerB)
+      & sink UI.interval (toMillisPerFrame . getFramesPerSecond <$> managerB)
 
   on UI.tick timer $ \_ -> liftIO $ addManagerUpdate getNextManagerState
 

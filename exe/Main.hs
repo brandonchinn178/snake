@@ -26,7 +26,7 @@ main = do
   port <- fromMaybe 8023 <$> readEnv "PORT"
 
   gameMode <- parseMode . fromMaybe "interactive" =<< lookupEnv "MODE"
-  initialMillisPerFrame <- fromMaybe 150 <$> readEnv "INITIAL_MS_PER_FRAME"
+  initialFPS <- fromMaybe 10 <$> readEnv "INITIAL_FPS"
   gridWidth <- fromMaybe 40 <$> readEnv "GRID_WIDTH"
   gridHeight <- fromMaybe 40 <$> readEnv "GRID_HEIGHT"
   maxBoardHeight <- fromMaybe 500 <$> readEnv "MAX_BOARD_HEIGHT"
@@ -38,7 +38,7 @@ main = do
         }
       opts = GameOptions
         { gameMode
-        , initialMillisPerFrame
+        , initialFPS
         , gameGrid = Grid{gridWidth, gridHeight}
         , maxBoardHeight
         , maxBoardWidth
