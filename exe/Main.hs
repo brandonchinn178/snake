@@ -22,7 +22,8 @@ main = do
         , jsPort = Just port
         }
       opts = GameOptions
-        { gameGrid =
+        { initialMillisPerFrame = 150
+        , gameGrid =
             Grid
               { gridWidth = 40
               , gridHeight = 40

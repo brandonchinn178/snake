@@ -40,11 +40,11 @@ initManagerWith opts@GameOptions{gameGrid} nextTargets =
 {-- Game state --}
 
 getMillisPerFrame :: GameManager -> Int
-getMillisPerFrame GameManager{gameState} =
+getMillisPerFrame GameManager{gameOptions, gameState} =
   let level = length (GameState.snakeTail gameState) `div` targetsPerLevel
    in max lowestMillisPerFrame $ initialMillisPerFrame + (level * changePerLevel)
   where
-    initialMillisPerFrame = 150
+    GameOptions{initialMillisPerFrame} = gameOptions
     lowestMillisPerFrame = 10
     -- change in ms/frame per level
     changePerLevel = -25

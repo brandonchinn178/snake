@@ -6,5 +6,6 @@ module Snake.GUI.Options (
 import Snake.Core.Grid (Grid (..))
 
 data GameOptions = GameOptions
-  { gameGrid :: Grid
+  { initialMillisPerFrame :: Int
+  , gameGrid :: Grid
   }
