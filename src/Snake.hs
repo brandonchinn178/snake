@@ -11,32 +11,9 @@ import Graphics.UI.Threepenny.Core
 
 import Snake.Core.Grid
 import Snake.Core.State
-import Snake.Core.Targets
 import Snake.GUI.Canvas
 import Snake.GUI.Keys
-
-{-- Game manager --}
-
-data GameManager = GameManager
-  { gameState :: GameState
-  , nextTargets :: NextTargets
-  }
-
-initManager :: IO GameManager
-initManager = initManagerWith <$> mkNextTargets
-
-reinitManager :: GameManager -> GameManager
-reinitManager = initManagerWith . nextTargets
-
-initManagerWith :: NextTargets -> GameManager
-initManagerWith nextTargets =
-  let (gameState, nextTargets') = mkInitialState nextTargets
-   in GameManager
-        { gameState = gameState
-        , nextTargets = nextTargets'
-        }
-
-{-- GUI --}
+import Snake.GUI.Manager
 
 gui :: Window -> UI ()
 gui window = do
@@ -60,7 +37,7 @@ gui window = do
 
   scoreBox <-
     UI.p
-      & sink UI.text (("Score: " <>) . show . getScore . gameState <$> managerB)
+      & sink UI.text (("Score: " <>) . show . getScore <$> managerB)
       & set style
           [ ("text-align", "center")
           , ("font-weight", "bold")
@@ -85,7 +62,7 @@ gui window = do
 
   timer <-
     UI.timer
-      & sink UI.interval (getMillisPerFrame . gameState <$> managerB)
+      & sink UI.interval (getMillisPerFrame <$> managerB)
 
   on UI.tick timer $ \_ -> liftIO $ addManagerUpdate $
     \manager@GameManager{..} ->
@@ -194,23 +171,6 @@ drawState state@GameState{gameStatus, target} canvas = do
     snakeColor = UI.htmlColor "#025d8c"
     targetColor = UI.htmlColor "#ffdd00"
     fillCircle center radius = UI.arc center radius 0 (2 * pi)
-
-{-- Game state --}
-
-getMillisPerFrame :: GameState -> Int
-getMillisPerFrame GameState{snakeTail} =
-  let level = length snakeTail `div` targetsPerLevel
-   in max lowestMillisPerFrame $ initialMillisPerFrame + (level * changePerLevel)
-  where
-    initialMillisPerFrame = 150
-    lowestMillisPerFrame = 10
-    -- change in ms/frame per level
-    changePerLevel = -25
-    -- how many targets to consume before incrementing the level
-    targetsPerLevel = 3
-
-getScore :: GameState -> Int
-getScore = length . snakeTail
 
 {-- Utilities --}
 
