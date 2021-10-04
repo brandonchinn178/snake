@@ -9,9 +9,10 @@ module Snake.GUI.Manager (
   -- * Game information
   getMillisPerFrame,
   getScore,
+  getNextManagerState,
 ) where
 
-import Snake.Core.State (GameState, mkInitialState)
+import Snake.Core.State (GameState, getNextState, mkInitialState)
 import Snake.Core.State qualified as GameState (GameState (..))
 import Snake.Core.Targets (NextTargets, mkNextTargets)
 import Snake.GUI.Canvas (Board, mkBoard)
@@ -57,3 +58,12 @@ getMillisPerFrame GameManager{gameOptions, gameState} =
 
 getScore :: GameManager -> Int
 getScore = length . GameState.snakeTail . gameState
+
+getNextManagerState :: GameManager -> GameManager
+getNextManagerState manager@GameManager{..} =
+  manager
+    { gameState = gameState'
+    , nextTargets = nextTargets'
+    }
+  where
+    (gameState', nextTargets') = getNextState gameState nextTargets

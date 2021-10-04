@@ -68,13 +68,7 @@ gui opts window = do
     UI.timer
       & sink UI.interval (getMillisPerFrame <$> managerB)
 
-  on UI.tick timer $ \_ -> liftIO $ addManagerUpdate $
-    \manager@GameManager{..} ->
-      let (gameState', nextTargets') = getNextState gameState nextTargets
-       in manager
-            { gameState = gameState'
-            , nextTargets = nextTargets'
-            }
+  on UI.tick timer $ \_ -> liftIO $ addManagerUpdate getNextManagerState
 
   on UI.keydown body $ \c -> liftIO . addManagerUpdate $
     let setMovementTo movement = \manager@GameManager{..} ->
