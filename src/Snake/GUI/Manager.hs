@@ -10,35 +10,38 @@ module Snake.GUI.Manager (
   getScore,
 ) where
 
-import Snake.Core.Grid (Grid)
-import Snake.Core.State (GameState (..), mkInitialState)
+import Snake.Core.State (GameState, mkInitialState)
+import Snake.Core.State qualified as GameState (GameState (..))
 import Snake.Core.Targets (NextTargets, mkNextTargets)
+import Snake.GUI.Options (GameOptions (..))
 
 data GameManager = GameManager
-  { gameState :: GameState
+  { gameOptions :: GameOptions
+  , gameState :: GameState
   , nextTargets :: NextTargets
   }
 
-initManager :: Grid -> IO GameManager
-initManager grid = initManagerWith grid <$> mkNextTargets grid
+initManager :: GameOptions -> IO GameManager
+initManager opts@GameOptions{gameGrid} = initManagerWith opts <$> mkNextTargets gameGrid
 
 reinitManager :: GameManager -> GameManager
-reinitManager GameManager{gameState, nextTargets} =
-  initManagerWith (gameGrid gameState) nextTargets
+reinitManager GameManager{gameOptions, nextTargets} =
+  initManagerWith gameOptions nextTargets
 
-initManagerWith :: Grid -> NextTargets -> GameManager
-initManagerWith grid nextTargets =
-  let (gameState, nextTargets') = mkInitialState grid nextTargets
+initManagerWith :: GameOptions -> NextTargets -> GameManager
+initManagerWith opts@GameOptions{gameGrid} nextTargets =
+  let (gameState, nextTargets') = mkInitialState gameGrid nextTargets
    in GameManager
-        { gameState = gameState
+        { gameOptions = opts
+        , gameState = gameState
         , nextTargets = nextTargets'
         }
 
 {-- Game state --}
 
 getMillisPerFrame :: GameManager -> Int
-getMillisPerFrame GameManager{gameState = GameState{snakeTail}} =
-  let level = length snakeTail `div` targetsPerLevel
+getMillisPerFrame GameManager{gameState} =
+  let level = length (GameState.snakeTail gameState) `div` targetsPerLevel
    in max lowestMillisPerFrame $ initialMillisPerFrame + (level * changePerLevel)
   where
     initialMillisPerFrame = 150
@@ -49,4 +52,4 @@ getMillisPerFrame GameManager{gameState = GameState{snakeTail}} =
     targetsPerLevel = 3
 
 getScore :: GameManager -> Int
-getScore = length . snakeTail . gameState
+getScore = length . GameState.snakeTail . gameState

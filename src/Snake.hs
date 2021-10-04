@@ -4,7 +4,7 @@
 
 module Snake (
   gui,
-  Grid (..),
+  module Snake.GUI.Options,
 ) where
 
 import Control.Monad (forM_, void)
@@ -17,12 +17,13 @@ import Snake.Core.State
 import Snake.GUI.Canvas
 import Snake.GUI.Keys
 import Snake.GUI.Manager
+import Snake.GUI.Options
 
-gui :: Grid -> Window -> UI ()
-gui gameGrid window = do
+gui :: GameOptions -> Window -> UI ()
+gui opts window = do
   {-- Game manager --}
 
-  initialManager <- liftIO $ initManager gameGrid
+  initialManager <- liftIO $ initManager opts
   (managerUpdateEvent, addManagerUpdate) <- liftIO newEvent
   managerB <- accumB initialManager managerUpdateEvent
 
