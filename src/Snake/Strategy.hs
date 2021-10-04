@@ -19,6 +19,7 @@ type BotStrategy = GameState -> Maybe Direction
 allStrategies :: [(String, BotStrategy)]
 allStrategies =
   [ ("naive_bot", naiveStrategy)
+  , ("greedy_bot", greedyStrategy)
   ]
 
 naiveStrategy :: GameState -> Maybe Direction
@@ -31,3 +32,25 @@ naiveStrategy GameState{target, snakeHead}
   where
     (targetX, targetY) = target
     (snakeHeadX, snakeHeadY) = snakeHead
+
+greedyStrategy :: GameState -> Maybe Direction
+greedyStrategy state@GameState{gameGrid, target, snakeHead} =
+  fmap fst . listToMaybe $
+    sortBy (comparing $ \(dir, _) -> if isProductive dir then 0 else 1 :: Int) $
+      filter isValid allOptions
+  where
+    allOptions =
+      map
+        (\dir -> (dir, nextPosition dir snakeHead))
+        [minBound .. maxBound]
+    isValid (_, next) =
+      not $ isOutOfBounds gameGrid next || next `elem` snakeBody state
+    isProductive dir =
+      case dir of
+        LEFT -> snakeHeadX > targetX
+        UP -> snakeHeadY > targetY
+        RIGHT -> snakeHeadX < targetX
+        DOWN -> snakeHeadY < targetY
+
+    (snakeHeadX, snakeHeadY) = snakeHead
+    (targetX, targetY) = target

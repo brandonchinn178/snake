@@ -19,7 +19,7 @@ data Grid = Grid
 type Coordinate = (Int, Int)
 
 data Direction = LEFT | UP | RIGHT | DOWN
-  deriving (Show)
+  deriving (Show, Enum, Bounded)
 
 flipDirection :: Direction -> Direction
 flipDirection = \case
