@@ -15,12 +15,15 @@ library:
     - random
     - threepenny-gui
 
-executable:
-  source-dirs: exe
-  main: Main.hs
-  dependencies:
-    - base
-    - bytestring
-    - snake
-    - open-browser
-    - threepenny-gui
+executables:
+  # TODO: rename back to 'snake'
+  # https://github.com/commercialhaskell/stack/issues/3918
+  snake-exe:
+    source-dirs: exe
+    main: Main.hs
+    dependencies:
+      - base
+      - bytestring
+      - snake
+      - open-browser
+      - threepenny-gui
