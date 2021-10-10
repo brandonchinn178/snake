@@ -96,15 +96,25 @@ lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
     -- rank the given state, the higher the better
     rankState :: LookaheadState -> Double
     rankState LookaheadState{..} =
-      let inv = recip . fromIntegral
+      let snakeBody = getSnakeBody snakeHead snakeTail
+          whenLeft e f = either f (const 0) e
+          whenRight e f = either (const 0) f e
+          inv = recip . fromIntegral
        in sum
-            [ case targetOrCount of
-                Left count ->
-                  -- add 1 to always put it higher than the Right branch
-                  1 + inv count
-                Right target ->
-                  inv $ manhattanDistance target snakeHead
+            [ (* 10) . fromIntegral $ length snakeBody
+            , (* 10) . whenLeft targetOrCount $ \count ->
+                -- add 1 so it's always higher than manhattan distance
+                1 + inv count
+            , (* 10) . whenRight targetOrCount $ \target ->
+                -- manhattanDistance >= 1 because targetOrCount is Left
+                -- when target == snakeHead
+                inv $ manhattanDistance target snakeHead
+            , inv $ (length . filter isKink . triples) snakeBody + 1
             ]
+
+    isKink :: (Coordinate, Coordinate, Coordinate) -> Bool
+    isKink ((x1, y1), (x2, y2), (x3, y3)) =
+      not $ (x1 == x2 && x2 == x3) || (y1 == y2 && y2 == y3)
 
 data LookaheadState = LookaheadState
   { moveHistory :: [Direction]
@@ -133,6 +143,11 @@ nTimes n f a = iterate f a !! n
 maximumOn :: Ord b => (a -> b) -> [a] -> Maybe a
 maximumOn _ [] = Nothing
 maximumOn f xs = Just (last $ sortOn f xs)
+
+triples :: [a] -> [(a, a, a)]
+triples xs
+  | length xs < 3 = []
+  | otherwise = zip3 xs (tail xs) (tail $ tail xs)
 
 manhattanDistance :: Coordinate -> Coordinate -> Int
 manhattanDistance (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
