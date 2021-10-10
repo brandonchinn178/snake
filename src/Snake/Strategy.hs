@@ -27,17 +27,17 @@ import Snake.Core.State (
 -- If it returns Nothing, don't change the direction.
 type BotStrategy = GameState -> Maybe Direction
 
-allStrategies :: [(String, BotStrategy)]
+allStrategies :: [(String, Int -> BotStrategy)]
 allStrategies =
   [ ("naive_bot", naiveStrategy)
   , ("greedy_bot", greedyStrategy)
-  , ("lookahead_bot", lookaheadStrategy 5)
+  , ("lookahead_bot", lookaheadStrategy)
   ]
 
 {-- Naive strategy --}
 
-naiveStrategy :: BotStrategy
-naiveStrategy GameState{target, snakeHead}
+naiveStrategy :: Int -> BotStrategy
+naiveStrategy _ GameState{target, snakeHead}
   | snakeHeadX < targetX = Just RIGHT
   | snakeHeadY < targetY = Just DOWN
   | snakeHeadX > targetX = Just LEFT
@@ -49,8 +49,8 @@ naiveStrategy GameState{target, snakeHead}
 
 {-- Greedy strategy --}
 
-greedyStrategy :: BotStrategy
-greedyStrategy GameState{..} =
+greedyStrategy :: Int -> BotStrategy
+greedyStrategy _ GameState{..} =
   listToMaybe $
     sortOn (\dir -> if isProductive dir then 0 else 1 :: Int) $
       getAllValidDirections gameGrid snakeHead snakeTail
