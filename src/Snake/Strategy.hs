@@ -96,11 +96,15 @@ lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
     -- rank the given state, the higher the better
     rankState :: LookaheadState -> Double
     rankState LookaheadState{..} =
-      sum
-        [ case targetOrCount of
-            Left count -> 1 + 1 / fromIntegral count
-            Right target -> 1 / fromIntegral (manhattanDistance target snakeHead)
-        ]
+      let inv = recip . fromIntegral
+       in sum
+            [ case targetOrCount of
+                Left count ->
+                  -- add 1 to always put it higher than the Right branch
+                  1 + inv count
+                Right target ->
+                  inv $ manhattanDistance target snakeHead
+            ]
 
 data LookaheadState = LookaheadState
   { moveHistory :: [Direction]
