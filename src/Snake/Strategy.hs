@@ -8,7 +8,7 @@ module Snake.Strategy (
 
 import Data.Either (fromRight)
 import Data.List (sortOn)
-import Data.Maybe (listToMaybe)
+import Data.Maybe (fromMaybe, listToMaybe)
 
 import Snake.Core.Grid (
   Coordinate,
@@ -97,19 +97,24 @@ lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
     rankState :: LookaheadState -> Double
     rankState LookaheadState{..} =
       let snakeBody = getSnakeBody snakeHead snakeTail
-          whenLeft e f = either f (const 0) e
-          whenRight e f = either (const 0) f e
-          inv = recip . fromIntegral
+          snakeLen = len snakeBody
+          len = fromIntegral . length
+          mTarget = either (const Nothing) Just targetOrCount
+          mCount = either (Just . fromIntegral) (const Nothing) targetOrCount
+          orZero = fromMaybe 0
        in sum
-            [ (* 10) . fromIntegral $ length snakeBody
-            , (* 10) . whenLeft targetOrCount $ \count ->
-                -- add 1 so it's always higher than manhattan distance
-                1 + inv count
-            , (* 10) . whenRight targetOrCount $ \target ->
-                -- manhattanDistance >= 1 because targetOrCount is Left
-                -- when target == snakeHead
-                inv $ manhattanDistance target snakeHead
-            , inv $ (length . filter isKink . triples) snakeBody + 1
+            [ snakeLen
+            , (* 10) $ orZero $ recip <$> mCount
+            , (* 10) $ case mTarget of
+                Nothing ->
+                  -- make sure this is always higher than the Right branch
+                  2
+                Just target ->
+                  -- manhattanDistance >= 1 because targetOrCount is Left
+                  -- when target == snakeHead
+                  recip $ manhattanDistance target snakeHead ** 2
+            , let numKinks = len . filter isKink . triples $ snakeBody
+               in (snakeLen - numKinks + 1) / snakeLen
               -- TODO: incentivize moving away from body
             ]
 
@@ -150,8 +155,8 @@ triples xs
   | length xs < 3 = []
   | otherwise = zip3 xs (tail xs) (tail $ tail xs)
 
-manhattanDistance :: Coordinate -> Coordinate -> Int
-manhattanDistance (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
+manhattanDistance :: Num a => Coordinate -> Coordinate -> a
+manhattanDistance (x1, y1) (x2, y2) = fromIntegral $ abs (x1 - x2) + abs (y1 - y2)
 
 getAllValidDirections :: Grid -> Coordinate -> [Direction] -> [Direction]
 getAllValidDirections gameGrid snakeHead snakeTail = filter isValid [minBound .. maxBound]
