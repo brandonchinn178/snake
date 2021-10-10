@@ -67,47 +67,57 @@ isRunning = \case
 
 -- | Get the next state.
 getNextState :: GameState -> NextTargets -> (GameState, NextTargets)
-getNextState state@GameState{..} nextTargets = (state', nextTargets')
+getNextState state@GameState{..} nextTargets =
+  case gameStatus of
+    SnakeHissingTowards dir ->
+      let (snakeHead', snakeTail', gotTarget) = getNextSnakePosition snakeHead snakeTail dir target
+          snakeBody' = getSnakeBody snakeHead' snakeTail'
+
+          gameStatus'
+            | isOutOfBounds gameGrid snakeHead' = SnakeRanIntoWall
+            | snakeHead' `elem` tail snakeBody' = SnakeAteItself
+            | otherwise = gameStatus
+
+          (target', nextTargets') =
+            if gotTarget
+              then findNextTargetWhere (`notElem` snakeBody') nextTargets
+              else (target, nextTargets)
+
+          state' =
+            if isRunning gameStatus'
+              then
+                state
+                  { snakeHead = snakeHead'
+                  , snakeTail = snakeTail'
+                  , target = target'
+                  }
+              else
+                -- if the snake is dead in the next state, don't move the snake
+                state
+       in (state'{gameStatus = gameStatus'}, nextTargets')
+    _ -> (state, nextTargets)
+
+-- | Get the next position of the snake.
+getNextSnakePosition ::
+  -- | The current snake head
+  Coordinate ->
+  -- | The current snake tail
+  [Direction] ->
+  -- | The current movement
+  Direction ->
+  -- | The current target
+  Coordinate ->
+  -- | The next snake head, snake tail, and whether we consumed the target (and thus the
+  -- snake tail grew by one)
+  (Coordinate, [Direction], Bool)
+getNextSnakePosition snakeHead snakeTail dir target = (snakeHead', snakeTail', gotTarget)
   where
-    state' =
-      if isRunning gameStatus'
-        then
-          state
-            { gameStatus = gameStatus'
-            , snakeHead = snakeHead'
-            , snakeTail = snakeTail'
-            , target = target'
-            }
-        else
-          state
-            { gameStatus = gameStatus'
-            }
-
-    snakeHead' =
-      case gameStatus of
-        SnakeHissingTowards dir -> nextPosition dir snakeHead
-        _ -> snakeHead
+    snakeHead' = nextPosition dir snakeHead
     gotTarget = snakeHead' == target
-
-    snakeTail' =
-      case gameStatus of
-        SnakeHissingTowards dir
-          | gotTarget -> flipDirection dir : snakeTail
-          | null snakeTail -> []
-          | otherwise -> flipDirection dir : init snakeTail
-        _ -> snakeTail
-
-    snakeBody' = getSnakeBody snakeHead' snakeTail'
-
-    gameStatus'
-      | isOutOfBounds gameGrid snakeHead' = SnakeRanIntoWall
-      | snakeHead' `elem` tail snakeBody' = SnakeAteItself
-      | otherwise = gameStatus
-
-    (target', nextTargets') =
-      if gotTarget
-        then findNextTargetWhere (`notElem` snakeBody') nextTargets
-        else (target, nextTargets)
+    snakeTail'
+      | gotTarget = flipDirection dir : snakeTail
+      | null snakeTail = []
+      | otherwise = flipDirection dir : init snakeTail
 
 
 -- | Set the movement in the GameState if the game is running.
