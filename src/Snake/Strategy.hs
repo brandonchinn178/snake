@@ -5,9 +5,8 @@ module Snake.Strategy (
   allStrategies,
 ) where
 
-import Data.List (sortBy)
+import Data.List (sortOn)
 import Data.Maybe (listToMaybe)
-import Data.Ord (comparing)
 
 import Snake.Core.Grid (Direction (..), isOutOfBounds, nextPosition)
 import Snake.Core.State (GameState (..), snakeBody)
@@ -40,7 +39,7 @@ naiveStrategy GameState{target, snakeHead}
 greedyStrategy :: BotStrategy
 greedyStrategy state@GameState{gameGrid, target, snakeHead} =
   fmap fst . listToMaybe $
-    sortBy (comparing $ \(dir, _) -> if isProductive dir then 0 else 1 :: Int) $
+    sortOn (\(dir, _) -> if isProductive dir then 0 else 1 :: Int) $
       filter isValid allOptions
   where
     allOptions =
