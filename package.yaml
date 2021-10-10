@@ -12,6 +12,7 @@ library:
   source-dirs: src
   dependencies:
     - base
+    - deepseq
     - random
     - threepenny-gui
 

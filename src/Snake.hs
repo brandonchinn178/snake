@@ -7,6 +7,7 @@ module Snake (
   module Snake.GUI.Options,
 ) where
 
+import Control.DeepSeq (deepseq)
 import Control.Monad (forM_, void)
 import Data.Function ((&))
 import Graphics.UI.Threepenny qualified as UI
@@ -104,13 +105,17 @@ gui opts window = do
 
 drawGame :: GameManager -> UI.Canvas -> UI ()
 drawGame GameManager{..} canvas = do
+  -- make sure the game state is evaluated before clearing the canvas
+  let snakeBody = getSnakeBody snakeHead snakeTail
+  (gameState, snakeBody) `deepseq` return ()
+
   UI.clearCanvas canvas
 
   -- draw snake
   element canvas
     & set UI.fillStyle snakeColor
     & void
-  forM_ (snakeBody gameState) $ \snakePart -> do
+  forM_ snakeBody $ \snakePart -> do
     let snakePartBox = coordinateToPixel gameBoard snakePart
     element canvas
       & runAll
@@ -165,7 +170,7 @@ drawGame GameManager{..} canvas = do
         & void
   where
     Board{boardHeight, boardWidth, pixelSize} = gameBoard
-    GameState{gameStatus, target} = gameState
+    GameState{gameStatus, target, snakeHead, snakeTail} = gameState
     snakeColor = UI.htmlColor "#025d8c"
     targetColor = UI.htmlColor "#ffdd00"
     fillCircle center radius = UI.arc center radius 0 (2 * pi)

@@ -74,7 +74,7 @@ lookaheadStrategy numSteps _ | numSteps <= 0 =
 lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
   fmap (last . moveHistory)
   . maximumOn rankState
-  . nTimes numSteps (concatMap getNextStates)
+  . nTimes numSteps (concatMap getNextStates) -- TODO: run concatMap in parallel
   $ [getInitialLookaheadState initialGameState]
   where
     getNextStates :: LookaheadState -> [LookaheadState]
@@ -110,6 +110,7 @@ lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
                 -- when target == snakeHead
                 inv $ manhattanDistance target snakeHead
             , inv $ (length . filter isKink . triples) snakeBody + 1
+              -- TODO: incentivize moving away from body
             ]
 
     isKink :: (Coordinate, Coordinate, Coordinate) -> Bool

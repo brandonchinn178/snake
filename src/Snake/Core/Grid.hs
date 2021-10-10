@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -10,16 +12,19 @@ module Snake.Core.Grid (
   isOutOfBounds,
 ) where
 
+import Control.DeepSeq (NFData)
+import GHC.Generics (Generic)
+
 data Grid = Grid
   { gridHeight :: Int
   , gridWidth :: Int
-  }
+  } deriving (Show, Generic, NFData)
 
 -- | Coordinates on the plane, with (0, 0) being the top-left corner
 type Coordinate = (Int, Int)
 
 data Direction = LEFT | UP | RIGHT | DOWN
-  deriving (Show, Enum, Bounded)
+  deriving (Show, Enum, Bounded, Generic, NFData)
 
 flipDirection :: Direction -> Direction
 flipDirection = \case

@@ -1,10 +1,11 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 
 module Snake.Core.State (
   GameState (..),
-  snakeBody,
   getSnakeBody,
   mkInitialState,
   getNextState,
@@ -13,6 +14,9 @@ module Snake.Core.State (
   GameStatus (..),
   isRunning,
 ) where
+
+import Control.DeepSeq (NFData)
+import GHC.Generics (Generic)
 
 import Snake.Core.Grid (
   Coordinate,
@@ -30,10 +34,7 @@ data GameState = GameState
   , snakeHead :: Coordinate
   , snakeTail :: [Direction]
   , target :: Coordinate
-  }
-
-snakeBody :: GameState -> [Coordinate]
-snakeBody GameState{snakeHead, snakeTail} = getSnakeBody snakeHead snakeTail
+  } deriving (Show, Generic, NFData)
 
 getSnakeBody :: Coordinate -> [Direction] -> [Coordinate]
 getSnakeBody = scanl (flip nextPosition)
@@ -58,7 +59,7 @@ data GameStatus
   | SnakeHissingTowards Direction
   | SnakeRanIntoWall
   | SnakeAteItself
-  deriving (Show)
+  deriving (Show, Generic, NFData)
 
 isRunning :: GameStatus -> Bool
 isRunning = \case
