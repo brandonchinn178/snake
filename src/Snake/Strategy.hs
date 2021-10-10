@@ -113,8 +113,9 @@ lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
                   -- manhattanDistance >= 1 because targetOrCount is Left
                   -- when target == snakeHead
                   recip $ manhattanDistance target snakeHead ** 2
+                  -- TODO: incentivize being on same x/y coordinate as target
             , let numKinks = len . filter isKink . triples $ snakeBody
-               in (snakeLen - numKinks + 1) / snakeLen
+               in 1 - numKinks / snakeLen
               -- TODO: incentivize moving away from body
             ]
 
