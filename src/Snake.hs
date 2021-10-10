@@ -109,8 +109,6 @@ drawGame GameManager{..} canvas = do
   let snakeBody = getSnakeBody snakeHead snakeTail
   (gameState, snakeBody) `deepseq` return ()
 
-  UI.clearCanvas canvas
-
   -- draw snake
   element canvas
     & set UI.fillStyle snakeColor
