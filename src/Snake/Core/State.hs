@@ -5,8 +5,10 @@
 module Snake.Core.State (
   GameState (..),
   snakeBody,
+  getSnakeBody,
   mkInitialState,
   getNextState,
+  getNextSnakePosition,
   setMovement,
   GameStatus (..),
   isRunning,
