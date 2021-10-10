@@ -70,7 +70,8 @@ gui opts window = do
     UI.timer
       & sink UI.interval (toMillisPerFrame . getFramesPerSecond <$> managerB)
 
-  on UI.tick timer $ \_ -> liftIO $ addManagerUpdate getNextManagerState
+  on UI.tick timer $ \_ -> liftIO $ addManagerUpdate $
+    \manager -> let manager' = getNextManagerState manager in gameState manager' `deepseq` manager'
 
   on UI.keydown body $ \c -> liftIO . addManagerUpdate $
     let setMovementTo movement = \manager@GameManager{..} ->
@@ -105,15 +106,11 @@ gui opts window = do
 
 drawGame :: GameManager -> UI.Canvas -> UI ()
 drawGame GameManager{..} canvas = do
-  -- make sure the game state is evaluated before clearing the canvas
-  let snakeBody = getSnakeBody snakeHead snakeTail
-  (gameState, snakeBody) `deepseq` return ()
-
   -- draw snake
   element canvas
     & set UI.fillStyle snakeColor
     & void
-  forM_ snakeBody $ \snakePart -> do
+  forM_ (getSnakeBody snakeHead snakeTail) $ \snakePart -> do
     let snakePartBox = coordinateToPixel gameBoard snakePart
     element canvas
       & runAll
