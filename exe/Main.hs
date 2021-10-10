@@ -27,6 +27,8 @@ main = do
 
   gameMode <- parseMode . fromMaybe "interactive" =<< lookupEnv "MODE"
   initialFPS <- fromMaybe 10 <$> readEnv "INITIAL_FPS"
+  fpsMultiplier <- fromMaybe 1.3 <$> readEnv "FPS_MULTIPLIER"
+  targetsPerLevel <- fromMaybe 3 <$> readEnv "TARGETS_PER_LEVEL"
   gridWidth <- fromMaybe 40 <$> readEnv "GRID_WIDTH"
   gridHeight <- fromMaybe 40 <$> readEnv "GRID_HEIGHT"
   maxBoardHeight <- fromMaybe 500 <$> readEnv "MAX_BOARD_HEIGHT"
@@ -39,6 +41,8 @@ main = do
       opts = GameOptions
         { gameMode
         , initialFPS
+        , fpsMultiplier
+        , targetsPerLevel
         , gameGrid = Grid{gridWidth, gridHeight}
         , maxBoardHeight
         , maxBoardWidth

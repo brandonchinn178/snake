@@ -54,11 +54,7 @@ getFramesPerSecond GameManager{gameOptions, gameState} =
   let level = length (GameState.snakeTail gameState) `div` targetsPerLevel
    in round $ fromIntegral initialFPS * fpsMultiplier ** fromIntegral level
   where
-    GameOptions{initialFPS} = gameOptions
-    -- fps multiplier per level
-    fpsMultiplier = 1.3 :: Double
-    -- how many targets to consume before incrementing the level
-    targetsPerLevel = 3
+    GameOptions{initialFPS, fpsMultiplier, targetsPerLevel} = gameOptions
 
 getScore :: GameManager -> Int
 getScore = length . GameState.snakeTail . gameState
