@@ -22,7 +22,9 @@ allStrategies =
   , ("greedy_bot", greedyStrategy)
   ]
 
-naiveStrategy :: GameState -> Maybe Direction
+{-- Naive strategy --}
+
+naiveStrategy :: BotStrategy
 naiveStrategy GameState{target, snakeHead}
   | snakeHeadX < targetX = Just RIGHT
   | snakeHeadY < targetY = Just DOWN
@@ -33,7 +35,9 @@ naiveStrategy GameState{target, snakeHead}
     (targetX, targetY) = target
     (snakeHeadX, snakeHeadY) = snakeHead
 
-greedyStrategy :: GameState -> Maybe Direction
+{-- Greedy strategy --}
+
+greedyStrategy :: BotStrategy
 greedyStrategy state@GameState{gameGrid, target, snakeHead} =
   fmap fst . listToMaybe $
     sortBy (comparing $ \(dir, _) -> if isProductive dir then 0 else 1 :: Int) $
