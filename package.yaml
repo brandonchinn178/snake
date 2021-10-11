@@ -13,6 +13,7 @@ library:
   dependencies:
     - base
     - deepseq
+    - parallel
     - random
     - threepenny-gui
 

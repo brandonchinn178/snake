@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -6,6 +8,9 @@ module Snake.Strategy (
   allStrategies,
 ) where
 
+import Control.DeepSeq (NFData)
+import Control.Parallel.Strategies (rdeepseq, rparWith, parMap)
+import GHC.Generics (Generic)
 import Data.Either (fromRight)
 import Data.List (sortOn)
 import Data.Maybe (fromMaybe, listToMaybe)
@@ -74,7 +79,7 @@ lookaheadStrategy numSteps _ | numSteps <= 0 =
 lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
   fmap (last . moveHistory)
   . maximumOn rankState
-  . nTimes numSteps (concatMap getNextStates) -- TODO: run concatMap in parallel
+  . nTimes numSteps (concat . parMap (rparWith rdeepseq) getNextStates)
   $ [getInitialLookaheadState initialGameState]
   where
     getNextStates :: LookaheadState -> [LookaheadState]
@@ -114,6 +119,7 @@ lookaheadStrategy numSteps initialGameState@GameState{gameGrid} =
                   -- when target == snakeHead
                   recip $ manhattanDistance target snakeHead ** 2
                   -- TODO: incentivize being on same x/y coordinate as target
+                  -- TODO: why does snake keep going down?
             , let numKinks = len . filter isKink . triples $ snakeBody
                in 1 - numKinks / snakeLen
               -- TODO: incentivize moving away from body
@@ -130,7 +136,7 @@ data LookaheadState = LookaheadState
   , targetOrCount :: Either Int Coordinate
     -- ^ The target or, if the target was eaten, how many
     -- steps until the target was eaten
-  }
+  } deriving (Generic, NFData)
 
 getInitialLookaheadState :: GameState -> LookaheadState
 getInitialLookaheadState GameState{..} =
